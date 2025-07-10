@@ -3,3 +3,5 @@ venv/
 .venv/
 virtual/
 .virtual/
+
+__pycache__
