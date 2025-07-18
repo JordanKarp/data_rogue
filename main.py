@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 import tcod
+import copy
+
 
 # from actions import EscapeAction, MovementAction
 from engine import Engine
 from entity import Entity
+import entity_factory
 from input_handlers import EventHandler
 from game_map import GameMap
 from procgen import generate_dungeon
@@ -16,18 +19,25 @@ def main() -> None:
     map_width = 80
     map_height = 45
 
+    MAX_ROOMS = 12
+    ROOM_MIN_SIZE = 4
+    ROOM_MAX_SIZE = 15
+    MAX_MONSTERS_PER_ROOM = 2
+
     tileset = tcod.tileset.load_tilesheet(
         "JK_Raving_1280x400.png", 16, 16, tcod.tileset.CHARMAP_CP437
     )
 
     event_handler = EventHandler()
 
-    player = Entity(int(screen_width / 2), int(screen_height / 2), "J", (255, 0, 0))
+    player = copy.deepcopy(entity_factory.player)
+    # player = Entity(int(screen_width / 2), int(screen_height / 2), "J", (255, 0, 0))
 
     game_map = generate_dungeon(
-        max_rooms=12,
-        room_min_size=4,
-        room_max_size=15,
+        max_rooms=MAX_ROOMS,
+        room_min_size=ROOM_MIN_SIZE,
+        room_max_size=ROOM_MAX_SIZE,
+        max_monsters_per_room=MAX_MONSTERS_PER_ROOM,
         map_width=map_width,
         map_height=map_height,
         player=player,

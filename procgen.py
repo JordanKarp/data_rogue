@@ -1,6 +1,8 @@
 from typing import List
+from random import random, randint
 
 from entity import Entity
+import entity_factory
 from game_map import GameMap
 from random import choice, sample, randint
 import tile_types
@@ -23,6 +25,7 @@ def generate_dungeon(
     max_rooms: int,
     room_min_size: int,
     room_max_size: int,
+    max_monsters_per_room: int,
     map_width: int,
     map_height: int,
     player: Entity,
@@ -54,8 +57,7 @@ def generate_dungeon(
             # The first room, where the player starts.
             player.x, player.y = new_room.center
         else:
-            dungeon.tiles[new_room.center] = tile_types.device
-
+            place_entities(new_room, dungeon, max_monsters_per_room)
         # else:  # All rooms after the first.
         #     # Dig out a tunnel between this room and the previous one.
         #     for x, y in tunnel_between(rooms[-1].center, new_room.center):
@@ -65,6 +67,20 @@ def generate_dungeon(
         rooms.append(new_room)
 
     return dungeon
+
+
+def place_entities(room: RectangularRoom, dungeon: GameMap, maximum_monsters: int):
+    number_of_monsters = randint(0, maximum_monsters)
+
+    for i in range(number_of_monsters):
+        x = randint(room.x1 + 1, room.x2 - 1)
+        y = randint(room.y1 + 1, room.y2 - 1)
+
+        if not any(entity.x == x and entity.y == y for entity in dungeon.entities):
+            if random() < 0.8:
+                entity_factory.orc.spawn(dungeon, x, y)
+            else:
+                entity_factory.troll.spawn(dungeon, x, y)
 
 
 def generate_walls(room, dungeon):
