@@ -1,7 +1,9 @@
 from typing import List
 from random import random, randint
 
-from entity import Entity
+# from entity import Entity
+from engine import Engine
+
 import entity_factory
 from game_map import GameMap
 from random import choice, sample, randint
@@ -28,11 +30,12 @@ def generate_dungeon(
     max_monsters_per_room: int,
     map_width: int,
     map_height: int,
-    player: Entity,
+    engine: Engine,
 ) -> GameMap:
     """Generate a new dungeon map."""
-    dungeon = GameMap(width=map_width, height=map_height, entities=[player])
 
+    player = engine.player
+    dungeon = GameMap(engine, map_width, map_height, entities=[player])
     rooms: List[RectangularRoom] = []
 
     for r in range(max_rooms):
@@ -55,7 +58,7 @@ def generate_dungeon(
 
         if len(rooms) == 0:
             # The first room, where the player starts.
-            player.x, player.y = new_room.center
+            player.place(*new_room.center, dungeon)
         else:
             place_entities(new_room, dungeon, max_monsters_per_room)
         # else:  # All rooms after the first.
