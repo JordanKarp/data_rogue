@@ -35,12 +35,7 @@ def new_tile(
 
 SHROUD = np.array((ord(" "), (255, 255, 255), (0, 0, 0)), dtype=graphic_dt)
 
-device = new_tile(
-    walkable=True,
-    transparent=True,
-    dark=(ord("☐"), (255, 255, 255), (30, 30, 30)),
-    light=(ord("☐"), (255, 255, 255), (50, 50, 50)),
-)
+
 tree = new_tile(
     walkable=True,
     transparent=False,
@@ -49,17 +44,42 @@ tree = new_tile(
 )
 
 
+road = new_tile(
+    walkable=True,
+    transparent=True,
+    dark=(ord(" "), (255, 255, 255), (40, 40, 40)),
+    light=(ord(" "), (255, 255, 255), (70, 70, 70)),
+)
+
+road_divider_horiz = new_tile(
+    walkable=True,
+    transparent=True,
+    dark=(ord("-"), (255, 255, 0), (40, 40, 40)),
+    light=(ord("-"), (255, 255, 0), (70, 70, 70)),
+)
+road_divider_vert = new_tile(
+    walkable=True,
+    transparent=True,
+    dark=(ord("|"), (255, 255, 0), (40, 40, 40)),
+    light=(ord("|"), (255, 255, 0), (70, 70, 70)),
+)
+road_divider_intersection = new_tile(
+    walkable=True,
+    transparent=True,
+    dark=(ord("+"), (255, 255, 0), (40, 40, 40)),
+    light=(ord("+"), (255, 255, 0), (70, 70, 70)),
+)
 cement = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord(" "), (255, 255, 255), (10, 10, 10)),
-    light=(ord(" "), (255, 255, 255), (20, 20, 20)),
+    dark=(ord(" "), (255, 255, 255), (70, 70, 70)),
+    light=(ord(" "), (255, 255, 255), (100, 100, 100)),
 )
 floor = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord(" "), (255, 255, 255), (30, 30, 30)),
-    light=(ord(" "), (255, 255, 255), (50, 50, 50)),
+    dark=(ord(" "), (255, 255, 255), (100, 100, 100)),
+    light=(ord(" "), (255, 255, 255), (130, 130, 130)),
 )
 wall = new_tile(
     walkable=False,

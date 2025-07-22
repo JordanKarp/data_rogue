@@ -8,7 +8,9 @@ import entity_factory
 from game_map import GameMap
 from random import choice, sample, randint
 import tile_types
+from rectangular_structure import RectangularStructure
 from rectangular_room import RectangularRoom
+from road import Road
 
 
 # def generate_dungeon(map_width, map_height) -> GameMap:
@@ -36,7 +38,15 @@ def generate_dungeon(
 
     player = engine.player
     dungeon = GameMap(engine, map_width, map_height, entities=[player])
-    rooms: List[RectangularRoom] = []
+    rooms: List[RectangularStructure] = []
+
+    road = generate_road(5, False, dungeon)
+    rooms.append(road)
+    road = generate_road(15, True, dungeon)
+    rooms.append(road)
+    dungeon.tiles[(15, 5)] = tile_types.road_divider_intersection
+    dungeon.tiles[(14, 5)] = tile_types.road_divider_horiz
+    dungeon.tiles[(16, 5)] = tile_types.road_divider_horiz
 
     for r in range(max_rooms):
         room_width = randint(room_min_size, room_max_size)
@@ -56,7 +66,7 @@ def generate_dungeon(
         # Dig out this rooms inner area.
         generate_walls(new_room, dungeon)
 
-        if len(rooms) == 0:
+        if len(rooms) == 2:
             # The first room, where the player starts.
             player.place(*new_room.center, dungeon)
         else:
@@ -91,9 +101,9 @@ def generate_walls(room, dungeon):
     dungeon.tiles[room.inner] = tile_types.floor
 
     # Walls
-    for wall in room.vertical_walls:
+    for wall in room.vertical_edges:
         dungeon.tiles[wall] = tile_types.vertical_wall
-    for wall in room.horizontal_walls:
+    for wall in room.horizontal_edges:
         dungeon.tiles[wall] = tile_types.horizontal_wall
 
     # Corners
@@ -103,13 +113,29 @@ def generate_walls(room, dungeon):
     dungeon.tiles[room.bottom_right_corner] = tile_types.bottom_right_corner_wall
 
     # Windows
-    h_windows = sample(room.horizontal_walls, k=3)
+    h_windows = sample(room.horizontal_edges, k=3)
     for window in h_windows:
         dungeon.tiles[window] = tile_types.horizontal_window
-    v_windows = sample(room.vertical_walls, k=3)
+    v_windows = sample(room.vertical_edges, k=3)
     for window in v_windows:
         dungeon.tiles[window] = tile_types.vertical_window
 
     # Door
-    door_tile = choice(room.walls)
+    door_tile = choice(room.edges)
     dungeon.tiles[door_tile] = tile_types.door
+
+
+def generate_road(pos, is_vert, dungeon):
+    divider_tile = (
+        tile_types.road_divider_vert if is_vert else tile_types.road_divider_horiz
+    )
+    length = dungeon.height if is_vert else dungeon.width
+    road = Road(pos, length, is_vert)
+
+    dungeon.tiles[road.center_line] = divider_tile
+    dungeon.tiles[road.lanes] = tile_types.road
+    print(road.center_line)
+    print(road.lanes)
+    # print(dungeon.tiles[road.lanes])
+
+    return road
