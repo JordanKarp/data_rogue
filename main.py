@@ -7,6 +7,8 @@ import copy
 from engine import Engine
 from entity import Entity
 import entity_factory
+import color
+
 
 # from input_handlers import EventHandler
 from game_map import GameMap
@@ -15,10 +17,10 @@ from procgen import generate_dungeon
 
 def main() -> None:
     screen_width = 80
-    screen_height = 80
+    screen_height = 50
 
-    map_width = 50
-    map_height = 80
+    map_width = 80
+    map_height = 43
 
     MAX_ROOMS = 20
     ROOM_MIN_SIZE = 4
@@ -45,6 +47,10 @@ def main() -> None:
     )
     engine.update_fov()
 
+    engine.message_log.add_message(
+        "Hello and welcome, adventurer, to yet another dungeon!", color.welcome_text
+    )
+
     with tcod.context.new(
         columns=screen_width,
         rows=screen_height,
@@ -54,8 +60,11 @@ def main() -> None:
     ) as context:
         root_console = tcod.console.Console(screen_width, screen_height, order="F")
         while True:
-            engine.render(console=root_console, context=context)
-            engine.event_handler.handle_events()
+            root_console.clear()
+            engine.event_handler.on_render(console=root_console)
+            context.present(root_console)
+
+            engine.event_handler.handle_events(context)
 
 
 if __name__ == "__main__":

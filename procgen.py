@@ -44,9 +44,15 @@ def generate_dungeon(
     rooms.append(road)
     road = generate_road(15, True, dungeon)
     rooms.append(road)
-    dungeon.tiles[(15, 5)] = tile_types.road_divider_intersection
-    dungeon.tiles[(14, 5)] = tile_types.road_divider_horiz
-    dungeon.tiles[(16, 5)] = tile_types.road_divider_horiz
+    # dungeon.tiles[(15, 5)] = tile_types.road
+    # dungeon.tiles[(14, 5)] = tile_types.road
+    # dungeon.tiles[(16, 5)] = tile_types.road_divider_vert
+    # dungeon.tiles[(15, 4)] = tile_types.road_divider_vert
+    # dungeon.tiles[(15, 6)] = tile_types.road_divider_vert
+    dungeon.tiles[(13, 6)] = tile_types.stop_line_vert
+    dungeon.tiles[(16, 4)] = tile_types.stop_line_vert
+    dungeon.tiles[(14, 3)] = tile_types.stop_line_horiz
+    dungeon.tiles[(16, 6)] = tile_types.stop_line_horiz
 
     for r in range(max_rooms):
         room_width = randint(room_min_size, room_max_size)
@@ -134,8 +140,7 @@ def generate_road(pos, is_vert, dungeon):
 
     dungeon.tiles[road.center_line] = divider_tile
     dungeon.tiles[road.lanes] = tile_types.road
-    print(road.center_line)
-    print(road.lanes)
+
     # print(dungeon.tiles[road.lanes])
 
     return road
