@@ -7,13 +7,13 @@ from rectangular_structure import RectangularStructure
 class Road(RectangularStructure):
     def __init__(self, pos: int, length: int, is_vert: int):
         if is_vert:
-            x = pos
+            x = pos - 1
             y = 0
             width = 3
             height = length
         else:
             x = 0
-            y = pos
+            y = pos - 1
             width = length
             height = 3
 

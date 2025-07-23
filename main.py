@@ -12,7 +12,7 @@ import color
 
 # from input_handlers import EventHandler
 from game_map import GameMap
-from procgen import generate_dungeon
+from procgen import generate_dungeon, generate_city
 
 
 def main() -> None:
@@ -25,6 +25,7 @@ def main() -> None:
     MAX_ROOMS = 20
     ROOM_MIN_SIZE = 4
     ROOM_MAX_SIZE = 15
+    NUM_ROADS = 5
     MAX_MONSTERS_PER_ROOM = 2
 
     tileset = tcod.tileset.load_tilesheet(
@@ -35,15 +36,24 @@ def main() -> None:
     # player = Entity(int(screen_width / 2), int(screen_height / 2), "J", (255, 0, 0))
     engine = Engine(player=player)
 
-    engine.game_map = generate_dungeon(
-        max_rooms=MAX_ROOMS,
-        room_min_size=ROOM_MIN_SIZE,
-        room_max_size=ROOM_MAX_SIZE,
+    # engine.game_map = generate_dungeon(
+    #     max_rooms=MAX_ROOMS,
+    #     room_min_size=ROOM_MIN_SIZE,
+    #     room_max_size=ROOM_MAX_SIZE,
+    #     max_monsters_per_room=MAX_MONSTERS_PER_ROOM,
+    #     map_width=map_width,
+    #     map_height=map_height,
+    #     engine=engine,
+    # )
+    engine.game_map = generate_city(
+        max_buildings=MAX_ROOMS,
+        building_min_size=ROOM_MIN_SIZE,
+        building_max_size=ROOM_MAX_SIZE,
+        num_roads=NUM_ROADS,
         max_monsters_per_room=MAX_MONSTERS_PER_ROOM,
         map_width=map_width,
         map_height=map_height,
         engine=engine,
-        # player=player,
     )
     engine.update_fov()
 

@@ -72,8 +72,8 @@ road_divider_intersection = new_tile(
 stop_line_vert = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord("⌠"), (255, 255, 255), (40, 40, 40)),
-    light=(ord("⌠"), (255, 255, 255), (70, 70, 70)),
+    dark=(ord("▐"), (255, 255, 255), (40, 40, 40)),
+    light=(ord("▐"), (255, 255, 255), (70, 70, 70)),
 )
 stop_line_horiz = new_tile(
     walkable=True,

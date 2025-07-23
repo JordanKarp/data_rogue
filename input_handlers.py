@@ -94,7 +94,7 @@ class MainGameEventHandler(EventHandler):
             action = BumpAction(player, dx, dy)
         elif key in WAIT_KEYS:
             action = WaitAction(player)
-        elif key == tcod.event.K_v:
+        elif key == tcod.event.KeySym.v:
             self.engine.event_handler = HistoryViewer(self.engine)
 
         elif key == tcod.event.KeySym.ESCAPE:

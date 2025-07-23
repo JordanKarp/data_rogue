@@ -13,18 +13,6 @@ from rectangular_room import RectangularRoom
 from road import Road
 
 
-# def generate_dungeon(map_width, map_height) -> GameMap:
-#     dungeon = GameMap(map_width, map_height)
-
-#     room_1 = RectangularRoom(x=20, y=15, width=10, height=15)
-#     room_2 = RectangularRoom(x=35, y=15, width=10, height=15)
-
-#     generate_walls(room_1, dungeon)
-#     generate_walls(room_2, dungeon)
-
-#     return dungeon
-
-
 def generate_dungeon(
     max_rooms: int,
     room_min_size: int,
@@ -77,15 +65,77 @@ def generate_dungeon(
             player.place(*new_room.center, dungeon)
         else:
             place_entities(new_room, dungeon, max_monsters_per_room)
-        # else:  # All rooms after the first.
-        #     # Dig out a tunnel between this room and the previous one.
-        #     for x, y in tunnel_between(rooms[-1].center, new_room.center):
-        #         dungeon.tiles[x, y] = tile_types.floor
 
         # Finally, append the new room to the list.
         rooms.append(new_room)
 
     return dungeon
+
+
+def generate_city(
+    max_buildings: int,
+    building_min_size: int,
+    building_max_size: int,
+    num_roads: int,
+    max_monsters_per_room: int,
+    map_width: int,
+    map_height: int,
+    engine: Engine,
+) -> GameMap:
+    """Generate a new dungeon map."""
+
+    player = engine.player
+    city = GameMap(engine, map_width, map_height, entities=[player])
+    structures: List[RectangularStructure] = []
+    roads_left = num_roads
+    while roads_left > 0:
+        is_vertical = random() > 0.5
+        side = map_width if is_vertical else map_height
+        pos = randint(int(side * 0.1), int(side * 0.9))
+        road = generate_road(pos, is_vertical, city)
+
+        for other_road in structures:
+            if road.intersects(other_road):
+                generate_intersection(road, other_road)
+
+        structures.append(road)
+        roads_left -= 1
+
+    for r in range(max_buildings):
+        room_width = randint(building_min_size, building_max_size)
+        room_height = randint(building_min_size, building_max_size)
+
+        x = randint(0, city.width - room_width - 1)
+        y = randint(0, city.height - room_height - 1)
+
+        # "RectangularRoom" class makes rectangles easier to work with
+        new_room = RectangularRoom(x, y, room_width, room_height)
+
+        # Run through the other rooms and see if they intersect with this one.
+        if any(new_room.intersects(other_room) for other_room in structures):
+            continue  # This room intersects, so go to the next attempt.
+        # If there are no intersections then the room is valid.
+
+        # Dig out this rooms inner area.
+        generate_walls(new_room, city)
+
+        if len(structures) == num_roads + 1:
+            # The first room, where the player starts.
+            player.place(*new_room.center, city)
+        else:
+            place_entities(new_room, city, max_monsters_per_room)
+
+        # Finally, append the new room to the list.
+        structures.append(new_room)
+
+    city.tiles[(16, 5)] = tile_types.wall
+    city.tiles[(16, 6)] = tile_types.wall
+    city.tiles[(15, 5)] = tile_types.bottom_left_corner_wall
+    city.tiles[(15, 6)] = tile_types.bottom_left_corner_wall
+    city.tiles[(17, 5)] = tile_types.bottom_right_corner_wall
+    city.tiles[(17, 6)] = tile_types.bottom_right_corner_wall
+
+    return city
 
 
 def place_entities(room: RectangularRoom, dungeon: GameMap, maximum_monsters: int):
@@ -144,3 +194,7 @@ def generate_road(pos, is_vert, dungeon):
     # print(dungeon.tiles[road.lanes])
 
     return road
+
+
+def generate_intersection(road, other_road):
+    pass
