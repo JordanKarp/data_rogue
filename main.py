@@ -7,10 +7,12 @@ import copy
 from engine import Engine
 from entity import Entity
 import entity_factory
+import color
+
 
 # from input_handlers import EventHandler
 from game_map import GameMap
-from procgen import generate_dungeon
+from procgen import generate_dungeon, generate_city
 
 
 def main() -> None:
@@ -18,11 +20,12 @@ def main() -> None:
     screen_height = 50
 
     map_width = 80
-    map_height = 45
+    map_height = 43
 
-    MAX_ROOMS = 12
+    MAX_ROOMS = 20
     ROOM_MIN_SIZE = 4
     ROOM_MAX_SIZE = 15
+    NUM_ROADS = 5
     MAX_MONSTERS_PER_ROOM = 2
 
     tileset = tcod.tileset.load_tilesheet(
@@ -33,17 +36,30 @@ def main() -> None:
     # player = Entity(int(screen_width / 2), int(screen_height / 2), "J", (255, 0, 0))
     engine = Engine(player=player)
 
-    engine.game_map = generate_dungeon(
-        max_rooms=MAX_ROOMS,
-        room_min_size=ROOM_MIN_SIZE,
-        room_max_size=ROOM_MAX_SIZE,
+    # engine.game_map = generate_dungeon(
+    #     max_rooms=MAX_ROOMS,
+    #     room_min_size=ROOM_MIN_SIZE,
+    #     room_max_size=ROOM_MAX_SIZE,
+    #     max_monsters_per_room=MAX_MONSTERS_PER_ROOM,
+    #     map_width=map_width,
+    #     map_height=map_height,
+    #     engine=engine,
+    # )
+    engine.game_map = generate_city(
+        max_buildings=MAX_ROOMS,
+        building_min_size=ROOM_MIN_SIZE,
+        building_max_size=ROOM_MAX_SIZE,
+        num_roads=NUM_ROADS,
         max_monsters_per_room=MAX_MONSTERS_PER_ROOM,
         map_width=map_width,
         map_height=map_height,
         engine=engine,
-        # player=player,
     )
     engine.update_fov()
+
+    engine.message_log.add_message(
+        "Hello and welcome, adventurer, to yet another dungeon!", color.welcome_text
+    )
 
     with tcod.context.new(
         columns=screen_width,
@@ -54,8 +70,11 @@ def main() -> None:
     ) as context:
         root_console = tcod.console.Console(screen_width, screen_height, order="F")
         while True:
-            engine.render(console=root_console, context=context)
-            engine.event_handler.handle_events()
+            root_console.clear()
+            engine.event_handler.on_render(console=root_console)
+            context.present(root_console)
+
+            engine.event_handler.handle_events(context)
 
 
 if __name__ == "__main__":
