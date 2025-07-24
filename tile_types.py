@@ -42,6 +42,12 @@ tree = new_tile(
     dark=(ord("↨"), (0, 255, 0), (30, 30, 30)),
     light=(ord("↨"), (0, 255, 0), (50, 50, 150)),
 )
+chair_horiz = new_tile(
+    walkable=True,
+    transparent=True,
+    dark=(ord("¥"), (225, 225, 225), (100, 100, 100)),
+    light=(ord("¥"), (255, 255, 255), (130, 130, 130)),
+)
 
 
 road = new_tile(

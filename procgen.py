@@ -13,63 +13,63 @@ from rectangular_room import RectangularRoom
 from road import Road
 
 
-def generate_dungeon(
-    max_rooms: int,
-    room_min_size: int,
-    room_max_size: int,
-    max_monsters_per_room: int,
-    map_width: int,
-    map_height: int,
-    engine: Engine,
-) -> GameMap:
-    """Generate a new dungeon map."""
+# def generate_dungeon(
+#     max_rooms: int,
+#     room_min_size: int,
+#     room_max_size: int,
+#     max_monsters_per_room: int,
+#     map_width: int,
+#     map_height: int,
+#     engine: Engine,
+# ) -> GameMap:
+#     """Generate a new dungeon map."""
 
-    player = engine.player
-    dungeon = GameMap(engine, map_width, map_height, entities=[player])
-    rooms: List[RectangularStructure] = []
+#     player = engine.player
+#     dungeon = GameMap(engine, map_width, map_height, entities=[player])
+#     rooms: List[RectangularStructure] = []
 
-    road = generate_road(5, False, dungeon)
-    rooms.append(road)
-    road = generate_road(15, True, dungeon)
-    rooms.append(road)
-    # dungeon.tiles[(15, 5)] = tile_types.road
-    # dungeon.tiles[(14, 5)] = tile_types.road
-    # dungeon.tiles[(16, 5)] = tile_types.road_divider_vert
-    # dungeon.tiles[(15, 4)] = tile_types.road_divider_vert
-    # dungeon.tiles[(15, 6)] = tile_types.road_divider_vert
-    dungeon.tiles[(13, 6)] = tile_types.stop_line_vert
-    dungeon.tiles[(16, 4)] = tile_types.stop_line_vert
-    dungeon.tiles[(14, 3)] = tile_types.stop_line_horiz
-    dungeon.tiles[(16, 6)] = tile_types.stop_line_horiz
+#     road = generate_road(5, False, dungeon)
+#     rooms.append(road)
+#     road = generate_road(15, True, dungeon)
+#     rooms.append(road)
+#     # dungeon.tiles[(15, 5)] = tile_types.road
+#     # dungeon.tiles[(14, 5)] = tile_types.road
+#     # dungeon.tiles[(16, 5)] = tile_types.road_divider_vert
+#     # dungeon.tiles[(15, 4)] = tile_types.road_divider_vert
+#     # dungeon.tiles[(15, 6)] = tile_types.road_divider_vert
+#     dungeon.tiles[(13, 6)] = tile_types.stop_line_vert
+#     dungeon.tiles[(16, 4)] = tile_types.stop_line_vert
+#     dungeon.tiles[(14, 3)] = tile_types.stop_line_horiz
+#     dungeon.tiles[(16, 6)] = tile_types.stop_line_horiz
 
-    for r in range(max_rooms):
-        room_width = randint(room_min_size, room_max_size)
-        room_height = randint(room_min_size, room_max_size)
+#     for r in range(max_rooms):
+#         room_width = randint(room_min_size, room_max_size)
+#         room_height = randint(room_min_size, room_max_size)
 
-        x = randint(0, dungeon.width - room_width - 1)
-        y = randint(0, dungeon.height - room_height - 1)
+#         x = randint(0, dungeon.width - room_width - 1)
+#         y = randint(0, dungeon.height - room_height - 1)
 
-        # "RectangularRoom" class makes rectangles easier to work with
-        new_room = RectangularRoom(x, y, room_width, room_height)
+#         # "RectangularRoom" class makes rectangles easier to work with
+#         new_room = RectangularRoom(x, y, room_width, room_height)
 
-        # Run through the other rooms and see if they intersect with this one.
-        if any(new_room.intersects(other_room) for other_room in rooms):
-            continue  # This room intersects, so go to the next attempt.
-        # If there are no intersections then the room is valid.
+#         # Run through the other rooms and see if they intersect with this one.
+#         if any(new_room.intersects(other_room) for other_room in rooms):
+#             continue  # This room intersects, so go to the next attempt.
+#         # If there are no intersections then the room is valid.
 
-        # Dig out this rooms inner area.
-        generate_walls(new_room, dungeon)
+#         # Dig out this rooms inner area.
+#         generate_walls(new_room, dungeon)
 
-        if len(rooms) == 2:
-            # The first room, where the player starts.
-            player.place(*new_room.center, dungeon)
-        else:
-            place_entities(new_room, dungeon, max_monsters_per_room)
+#         if len(rooms) == 2:
+#             # The first room, where the player starts.
+#             player.place(*new_room.center, dungeon)
+#         else:
+#             place_entities(new_room, dungeon, max_monsters_per_room)
 
-        # Finally, append the new room to the list.
-        rooms.append(new_room)
+#         # Finally, append the new room to the list.
+#         rooms.append(new_room)
 
-    return dungeon
+#     return dungeon
 
 
 def generate_city(
@@ -78,6 +78,7 @@ def generate_city(
     building_max_size: int,
     num_roads: int,
     max_monsters_per_room: int,
+    max_items_per_room: int,
     map_width: int,
     map_height: int,
     engine: Engine,
@@ -88,8 +89,14 @@ def generate_city(
     city = GameMap(engine, map_width, map_height, entities=[player])
     structures: List[RectangularStructure] = []
     roads_left = num_roads
+    road_orientation_percent = 0.5
     while roads_left > 0:
-        is_vertical = random() > 0.5
+        is_vertical = random() < road_orientation_percent
+        if is_vertical:
+            road_orientation_percent -= 0.1
+        else:
+            road_orientation_percent += 0.1
+
         side = map_width if is_vertical else map_height
         pos = randint(int(side * 0.1), int(side * 0.9))
         road = generate_road(pos, is_vertical, city)
@@ -123,23 +130,29 @@ def generate_city(
             # The first room, where the player starts.
             player.place(*new_room.center, city)
         else:
-            place_entities(new_room, city, max_monsters_per_room)
+            place_entities(new_room, city, max_monsters_per_room, max_items_per_room)
 
         # Finally, append the new room to the list.
         structures.append(new_room)
 
     city.tiles[(16, 5)] = tile_types.wall
     city.tiles[(16, 6)] = tile_types.wall
-    city.tiles[(15, 5)] = tile_types.bottom_left_corner_wall
-    city.tiles[(15, 6)] = tile_types.bottom_left_corner_wall
-    city.tiles[(17, 5)] = tile_types.bottom_right_corner_wall
-    city.tiles[(17, 6)] = tile_types.bottom_right_corner_wall
+    city.tiles[(15, 5)] = tile_types.chair_horiz
+    city.tiles[(15, 6)] = tile_types.chair_horiz
+    city.tiles[(17, 5)] = tile_types.chair_horiz
+    city.tiles[(17, 6)] = tile_types.chair_horiz
 
     return city
 
 
-def place_entities(room: RectangularRoom, dungeon: GameMap, maximum_monsters: int):
+def place_entities(
+    room: RectangularRoom,
+    dungeon: GameMap,
+    maximum_monsters: int,
+    maximum_items: int,
+):
     number_of_monsters = randint(0, maximum_monsters)
+    number_of_items = randint(0, maximum_items)
 
     for i in range(number_of_monsters):
         x = randint(room.x1 + 1, room.x2 - 1)
@@ -150,6 +163,13 @@ def place_entities(room: RectangularRoom, dungeon: GameMap, maximum_monsters: in
                 entity_factory.orc.spawn(dungeon, x, y)
             else:
                 entity_factory.troll.spawn(dungeon, x, y)
+
+    for i in range(number_of_items):
+        x = randint(room.x1 + 1, room.x2 - 1)
+        y = randint(room.y1 + 1, room.y2 - 1)
+
+        if not any(entity.x == x and entity.y == y for entity in dungeon.entities):
+            entity_factory.health_potion.spawn(dungeon, x, y)
 
 
 def generate_walls(room, dungeon):
