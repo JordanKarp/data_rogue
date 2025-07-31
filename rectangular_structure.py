@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple
+from typing import List, Tuple
 
 
 class RectangularStructure:
@@ -11,6 +11,10 @@ class RectangularStructure:
         self.y2 = y + height
         self.width = width
         self.height = height
+
+    @property
+    def as_tuple(self) -> Tuple[int, int, int, int]:
+        return self.x1, self.y1, self.width, self.height
 
     @property
     def center(self) -> Tuple[int, int]:
@@ -34,6 +38,10 @@ class RectangularStructure:
         )
 
     @property
+    def edges_and_corners(self) -> List[Tuple[int, int]]:
+        return self.edges + self.corners
+
+    @property
     def top_left_corner(self) -> Tuple[int, int]:
         return self.x1, self.y1
 
@@ -50,7 +58,16 @@ class RectangularStructure:
         return self.x2, self.y2
 
     @property
-    def vertical_edges(self) -> Tuple[int, int]:
+    def corners(self) -> List[Tuple[int, int]]:
+        return [
+            self.top_left_corner,
+            self.top_right_corner,
+            self.bottom_left_corner,
+            self.bottom_right_corner,
+        ]
+
+    @property
+    def vertical_edges(self) -> List[Tuple[int, int]]:
         vertical_tiles = []
         #  Left and right edges, excluding corners to avoid duplicates
         for y in range(self.y1 + 1, self.y2):
@@ -59,7 +76,7 @@ class RectangularStructure:
         return vertical_tiles
 
     @property
-    def horizontal_edges(self) -> Tuple[int, int]:
+    def horizontal_edges(self) -> List[Tuple[int, int]]:
         horizontal_tiles = []
         # Top and bottom edges
         for x in range(self.x1 + 1, self.x2):
@@ -68,5 +85,5 @@ class RectangularStructure:
         return horizontal_tiles
 
     @property
-    def edges(self) -> Tuple[int, int]:
+    def edges(self) -> List[Tuple[int, int]]:
         return self.horizontal_edges + self.vertical_edges

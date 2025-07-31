@@ -48,6 +48,10 @@ WAIT_KEYS = {
     tcod.event.KeySym.KP_5,
     tcod.event.KeySym.CLEAR,
 }
+CONFIRM_KEYS = {
+    tcod.event.KeySym.RETURN,
+    tcod.event.KeySym.KP_ENTER,
+}
 
 
 class EventHandler(tcod.event.EventDispatch[Action]):
@@ -72,7 +76,7 @@ class EventHandler(tcod.event.EventDispatch[Action]):
             return False  # Skip enemy turn on exceptions.
 
         self.engine.handle_enemy_turns()
-
+        self.engine.update_gameclock()
         self.engine.update_fov()
         return True
 
@@ -174,7 +178,7 @@ class InventoryEventHandler(AskUserEventHandler):
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[Action]:
         player = self.engine.player
         key = event.sym
-        index = key - tcod.event.K_a
+        index = key - tcod.event.KeySym.a
 
         if 0 <= index <= 26:
             try:
@@ -210,6 +214,67 @@ class InventoryDropHandler(InventoryEventHandler):
         return DropItem(self.engine.player, item)
 
 
+class SelectIndexHandler(AskUserEventHandler):
+    """Handles asking the user for an index on the map."""
+
+    def __init__(self, engine: Engine):
+        """Sets the cursor to the player when this handler is constructed."""
+        super().__init__(engine)
+        player = self.engine.player
+        engine.mouse_location = player.x, player.y
+
+    def on_render(self, console: tcod.Console) -> None:
+        """Highlight the tile under the cursor."""
+        super().on_render(console)
+        x, y = self.engine.mouse_location
+        console.tiles_rgb["bg"][x, y] = color.white
+        console.tiles_rgb["fg"][x, y] = color.black
+
+    def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[Action]:
+        """Check for key movement or confirmation keys."""
+        key = event.sym
+        if key in MOVE_KEYS:
+            modifier = 1  # Holding modifier keys will speed up key movement.
+            if event.mod & (tcod.event.Modifier.LSHIFT | tcod.event.Modifier.RSHIFT):
+                modifier *= 5
+            if event.mod & (tcod.event.Modifier.LCTRL | tcod.event.Modifier.RCTRL):
+                modifier *= 10
+            if event.mod & (tcod.event.Modifier.LALT | tcod.event.Modifier.RALT):
+                modifier *= 20
+
+            x, y = self.engine.mouse_location
+            dx, dy = MOVE_KEYS[key]
+            x += dx * modifier
+            y += dy * modifier
+            # Clamp the cursor index to the map size.
+            x = max(0, min(x, self.engine.game_map.width - 1))
+            y = max(0, min(y, self.engine.game_map.height - 1))
+            self.engine.mouse_location = x, y
+            return None
+        elif key in CONFIRM_KEYS:
+            return self.on_index_selected(*self.engine.mouse_location)
+        return super().ev_keydown(event)
+
+    def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[Action]:
+        """Left click confirms a selection."""
+        if self.engine.game_map.in_bounds(*event.tile):
+            if event.button == 1:
+                return self.on_index_selected(*event.tile)
+        return super().ev_mousebuttondown(event)
+
+    def on_index_selected(self, x: int, y: int) -> Optional[Action]:
+        """Called when an index is selected."""
+        raise NotImplementedError()
+
+
+class LookHandler(SelectIndexHandler):
+    """Lets the player look around using the keyboard."""
+
+    def on_index_selected(self, x: int, y: int) -> None:
+        """Return to main handler."""
+        self.engine.event_handler = MainGameEventHandler(self.engine)
+
+
 class MainGameEventHandler(EventHandler):
 
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[Action]:
@@ -231,6 +296,8 @@ class MainGameEventHandler(EventHandler):
             self.engine.event_handler = InventoryActivateHandler(self.engine)
         elif key == tcod.event.KeySym.d:
             self.engine.event_handler = InventoryDropHandler(self.engine)
+        elif key == tcod.event.KeySym.SLASH:
+            self.engine.event_handler = LookHandler(self.engine)
 
         elif key == tcod.event.KeySym.ESCAPE:
             raise SystemExit()

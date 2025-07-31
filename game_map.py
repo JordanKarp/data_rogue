@@ -21,6 +21,7 @@ class GameMap:
         self.width, self.height = width, height
         self.entities = set(entities)
         self.tiles = np.full((width, height), fill_value=tile_types.cement, order="F")
+        self.camera = self.engine.camera
 
         # Tiles the player can currently see
         self.visible = np.full((width, height), fill_value=False, order="F")
@@ -72,19 +73,41 @@ class GameMap:
         If it isn't, but it's in the "explored" array, then draw it with the "dark" colors.
         Otherwise, the default is "SHROUD".
         """
-        console.rgb[0 : self.width, 0 : self.height] = np.select(
-            condlist=[self.visible, self.explored],
-            choicelist=[self.tiles["light"], self.tiles["dark"]],
-            default=tile_types.SHROUD,
+        # console.rgb[0 : self.width, 0 : self.height] = np.select(
+        #     condlist=[self.visible, self.explored],
+        #     choicelist=[self.tiles["light"], self.tiles["dark"]],
+        #     default=tile_types.SHROUD,
+        # )
+
+        vx, vy = self.camera.viewport()
+
+        # Slice world arrays in (x, y) order
+        visible_slice = self.visible[vx, vy]
+        explored_slice = self.explored[vx, vy]
+        light_tiles = self.tiles["light"][vx, vy]
+        dark_tiles = self.tiles["dark"][vx, vy]
+
+        console.rgb[0 : self.camera.screen_width, 0 : self.camera.screen_height] = (
+            np.select(
+                condlist=[visible_slice, explored_slice],
+                choicelist=[light_tiles, dark_tiles],
+                default=tile_types.SHROUD,
+            )
         )
 
         entities_sorted_for_rendering = sorted(
             self.entities, key=lambda x: x.render_order.value
         )
 
-        for entity in entities_sorted_for_rendering:
-            # Only print entities that are in the FOV
-            if self.visible[entity.x, entity.y] or entity.char == "J":
-                console.print(
-                    x=entity.x, y=entity.y, string=entity.char, fg=entity.color
-                )
+        for sx, sy, ent in self.camera.entities_to_screen(
+            entities_sorted_for_rendering
+        ):
+            if self.visible[ent.x, ent.y]:
+                console.print(x=sx, y=sy, string=ent.char, fg=ent.color)
+
+        # for entity in entities_sorted_for_rendering:
+        #     # Only print entities that are in the FOV
+        #     pos_x, pos_y = self.camera.world_to_screen(entity.x, entity.y)
+        #     if self.visible[e, pos_y] or entity.char == "J":
+        #         # if self.visible[entity.x, entity.y] or entity.char == "J":
+        #         console.print(x=pos_x, y=pos_y, string=entity.char, fg=entity.color)

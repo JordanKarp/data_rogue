@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from tcod.context import Context
 from tcod.console import Console
 from tcod.map import compute_fov
+from libtcodpy import FOV_SYMMETRIC_SHADOWCAST
 
 # from actions import EscapeAction, MovementAction
-
+from camera import Camera
 from input_handlers import MainGameEventHandler
 from game_clock import GameClock
 from message_log import MessageLog
@@ -22,13 +22,14 @@ if TYPE_CHECKING:
 class Engine:
     game_map: GameMap
 
-    def __init__(self, player: Actor):
+    def __init__(self, player: Actor, camera: Camera):
         self.event_handler: EventHandler = MainGameEventHandler(self)
         self.player = player
         self.mouse_location = (0, 0)
 
         self.message_log = MessageLog()
         self.clock = GameClock()
+        self.camera = camera
 
     def handle_enemy_turns(self) -> None:
         for entity in set(self.game_map.actors) - {self.player}:
@@ -40,13 +41,23 @@ class Engine:
 
     def update_fov(self) -> None:
         """Recompute the visible area based on the players point of view."""
+
         self.game_map.visible[:] = compute_fov(
             self.game_map.tiles["transparent"],
             (self.player.x, self.player.y),
             radius=10,
+            algorithm=FOV_SYMMETRIC_SHADOWCAST,
         )
         # If a tile is "visible" it should be added to "explored".
         self.game_map.explored |= self.game_map.visible
+
+    def update_camera(self, map_width, map_height) -> None:
+        self.camera.update(
+            target_x=self.player.x,
+            target_y=self.player.y,
+            map_width=map_width,
+            map_height=map_height,
+        )
 
     def update_gameclock(self) -> None:
         self.clock.increment()
