@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from tcod.console import Console
 from tcod.map import compute_fov
-from libtcodpy import FOV_SYMMETRIC_SHADOWCAST
+from libtcodpy import FOV_SYMMETRIC_SHADOWCAST, FOV_BASIC
 
 # from actions import EscapeAction, MovementAction
 from camera import Camera
@@ -46,7 +46,7 @@ class Engine:
             self.game_map.tiles["transparent"],
             (self.player.x, self.player.y),
             radius=10,
-            algorithm=FOV_SYMMETRIC_SHADOWCAST,
+            algorithm=FOV_BASIC,
         )
         # If a tile is "visible" it should be added to "explored".
         self.game_map.explored |= self.game_map.visible

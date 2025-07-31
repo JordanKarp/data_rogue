@@ -1,5 +1,9 @@
 from components.ai import HostileEnemy
-from components.consumable import HealingConsumable, LightningDamageConsumable
+from components.consumable import (
+    HealingConsumable,
+    LightningDamageConsumable,
+    ConfusionConsumable,
+)
 from components.fighter import Fighter
 from entity import Actor, Item
 from components.inventory import Inventory
@@ -42,4 +46,10 @@ lightning_scroll = Item(
     color=(255, 255, 0),
     name="Lightning Scroll",
     consumable=LightningDamageConsumable(damage=20, maximum_range=5),
+)
+confusion_scroll = Item(
+    char="α",
+    color=(207, 63, 255),
+    name="Confusion Scroll",
+    consumable=ConfusionConsumable(number_of_turns=10),
 )

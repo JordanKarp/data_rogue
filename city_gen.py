@@ -314,17 +314,19 @@ def generate_windows(city, structure, number_of_windows=4):
 
     h_window_spots = random.sample(structure.horizontal_edges, k=windows_each)
     for spot in h_window_spots:
-        city.tiles[spot] = tile_types.horizontal_window
+        if city.tiles[spot] in tile_types.FLAT_WALL_TILES:
+            city.tiles[spot] = tile_types.horizontal_window
 
     v_windows = random.sample(structure.vertical_edges, k=windows_each)
     for spot in v_windows:
-        city.tiles[spot] = tile_types.vertical_window
+        if city.tiles[spot] in tile_types.FLAT_WALL_TILES:
+            city.tiles[spot] = tile_types.vertical_window
 
 
 def generate_outer_doors(city, structure):
     while True:
         door_spot = random.choice(structure.edges)
-        if city.tiles[door_spot] not in tile_types.INTERSECTION_WALL_TILES:
+        if city.tiles[door_spot] in tile_types.FLAT_WALL_TILES:
             city.tiles[door_spot] = tile_types.door
             return
 
@@ -369,10 +371,23 @@ def generate_player(city, player, structures):
 
 
 def generate_npcs(city, structures, roads):
-    pass
+    npcs_to_generate = 46
+    while npcs_to_generate:
+        random_room = random.choice(structures)
+        x, y = random.choice(slices_to_xys(*(random_room.inner)))
+        if city.tiles[(x, y)] in tile_types.EMPTY_TILES:
+            entity_factory.troll.spawn(city, x, y)
+            npcs_to_generate -= 1
 
 
 def generate_items(city, structures):
-    for structure in structures:
-        (x, y) = random.choice(slices_to_xys(*structure.inner))
-        entity_factory.lightning_scroll.spawn(city, x, y)
+    items_to_place = len(structures)
+    while items_to_place:
+        random_room = random.choice(structures)
+        x, y = random.choice(slices_to_xys(*(random_room.inner)))
+        if city.tiles[(x, y)] in tile_types.EMPTY_TILES:
+            if random.random() <= 0.2:
+                entity_factory.lightning_scroll.spawn(city, x, y)
+            else:
+                entity_factory.confusion_scroll.spawn(city, x, y)
+            items_to_place -= 1
