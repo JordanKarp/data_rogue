@@ -17,6 +17,12 @@ def new_generate_city(engine, map_width, map_height):
     player = engine.player
     city = GameMap(engine, map_width, map_height, entities=[player])
 
+    # city_blocks, road_dimensions = generate_city_blocks(
+    #     city_width=map_width,
+    #     city_height=map_height,
+    #     block_min=10,
+    #     block_max=15,
+    # )
     city_blocks, road_dimensions = subdivide_grid_with_roads(
         map_width, map_height, MIN_BLOCK_SIZE, BLOCK_DIVISION_DEPTH
     )
@@ -44,7 +50,7 @@ def subdivide_grid_with_roads(
         if depth == 0 or (
             w < min_size * 2 + ROAD_WIDTH and h < min_size * 2 + ROAD_WIDTH
         ):
-            blocks.append(RectangularStructure(x, y, w, h))
+            blocks.append(RectangularStructure(x + 1, y + 1, w - 3, h - 3))
             return
 
         split_horizontally = random.choice([True, False])
@@ -83,7 +89,67 @@ def subdivide_grid_with_roads(
             )
 
     split(0, 0, width, height, max_depth)
+    roads = merge_continuous_roads(roads)
     return [block.as_tuple for block in blocks], [road.as_tuple for road in roads]
+
+
+def merge_continuous_roads(
+    roads: list[RectangularStructure],
+) -> list[RectangularStructure]:
+    merged = roads[:]
+    changed = True
+
+    while changed:
+        changed = False
+        new_list = []
+        skip = set()
+
+        for i, r1 in enumerate(merged):
+            if i in skip:
+                continue
+            merged_this = False
+            for j, r2 in enumerate(merged):
+                if j <= i or j in skip:
+                    continue
+
+                # Horizontal merge (same y, same width)
+                if (
+                    r1.y1 == r2.y1
+                    and r1.height == r2.height
+                    and r1.x1 + r1.width == r2.x1
+                ):
+                    new_list.append(
+                        RectangularStructure(
+                            r1.x1, r1.y1, r1.width + r2.width, r1.height
+                        )
+                    )
+                    skip.add(j)
+                    merged_this = True
+                    changed = True
+                    break
+
+                # Vertical merge (same x, same width)
+                if (
+                    r1.x1 == r2.x1
+                    and r1.width == r2.width
+                    and r1.y1 + r1.height == r2.y1
+                ):
+                    new_list.append(
+                        RectangularStructure(
+                            r1.x1, r1.y1, r1.width, r1.height + r2.height
+                        )
+                    )
+                    skip.add(j)
+                    merged_this = True
+                    changed = True
+                    break
+
+            if not merged_this:
+                new_list.append(r1)
+
+        merged = new_list
+
+    return merged
 
 
 def generate_roads(city, road_dimensions):
@@ -113,9 +179,6 @@ def generate_roads(city, road_dimensions):
 
 
 def generate_intersection(city, road, other_road):
-    # generate single road, including different types
-    # spot = intersect_coords_stepped(road.center_line, other_road.center_line)
-    # city.tiles[spot] = tile_types.tree
     pass
 
 
@@ -125,7 +188,7 @@ def generate_structures(city, block_dimensions):
 
     for x, y, w, h in block_dimensions:
         # determine size
-        structure = RectangularRoom(x + 1, y + 1, w - 3, h - 3)
+        structure = RectangularRoom(x, y, w, h)
 
         if any(structure.intersects(other_structure) for other_structure in structures):
             continue
@@ -139,7 +202,7 @@ def generate_structures(city, block_dimensions):
             generate_walls(city, room)
             generate_outer_doors(city, room)
 
-        generate_windows(city, structure)
+        # generate_windows(city, structure)
         generate_outer_doors(city, structure)
 
         chair_spot = random.choices(structure.along_inside_walls, k=12)
@@ -281,14 +344,14 @@ def generate_walls(city, structure: RectangularStructure, wall_type=None):
             city.tiles[spot] = tile_types.wall
 
 
-def generate_inner_walls(city, structure, room):
-    for spot in room.edges_and_corners:
-        if spot in structure.edges_and_corners:
-            continue
-        if spot in room.vertical_edges:
-            city.tiles[spot] = tile_types.vertical_wall
-        elif spot in room.horizontal_edges:
-            city.tiles[spot] = tile_types.horizontal_wall
+# def generate_inner_walls(city, structure, room):
+#     for spot in room.edges_and_corners:
+#         if spot in structure.edges_and_corners:
+#             continue
+#         if spot in room.vertical_edges:
+#             city.tiles[spot] = tile_types.vertical_wall
+#         elif spot in room.horizontal_edges:
+#             city.tiles[spot] = tile_types.horizontal_wall
 
 
 def generate_flooring(city, structure, floor_tile=tile_types.floor):
@@ -310,17 +373,19 @@ def generate_flooring(city, structure, floor_tile=tile_types.floor):
 
 
 def generate_windows(city, structure, number_of_windows=4):
-    windows_each = number_of_windows // 2
+    windows_each = max(0, number_of_windows // 2)
 
-    h_window_spots = random.sample(structure.horizontal_edges, k=windows_each)
-    for spot in h_window_spots:
-        if city.tiles[spot] in tile_types.FLAT_WALL_TILES:
-            city.tiles[spot] = tile_types.horizontal_window
+    if len(structure.horizontal_edges) > windows_each:
+        h_window_spots = random.sample(structure.horizontal_edges, k=windows_each)
+        for spot in h_window_spots:
+            if city.tiles[spot] in tile_types.FLAT_WALL_TILES:
+                city.tiles[spot] = tile_types.horizontal_window
 
-    v_windows = random.sample(structure.vertical_edges, k=windows_each)
-    for spot in v_windows:
-        if city.tiles[spot] in tile_types.FLAT_WALL_TILES:
-            city.tiles[spot] = tile_types.vertical_window
+    if len(structure.vertical_edges) > windows_each:
+        v_windows = random.sample(structure.vertical_edges, k=windows_each)
+        for spot in v_windows:
+            if city.tiles[spot] in tile_types.FLAT_WALL_TILES:
+                city.tiles[spot] = tile_types.vertical_window
 
 
 def generate_outer_doors(city, structure):
@@ -386,8 +451,11 @@ def generate_items(city, structures):
         random_room = random.choice(structures)
         x, y = random.choice(slices_to_xys(*(random_room.inner)))
         if city.tiles[(x, y)] in tile_types.EMPTY_TILES:
-            if random.random() <= 0.2:
+            val = random.random()
+            if val <= 0.2:
                 entity_factory.lightning_scroll.spawn(city, x, y)
-            else:
+            if val <= 0.5:
                 entity_factory.confusion_scroll.spawn(city, x, y)
+            else:
+                entity_factory.fireball_scroll.spawn(city, x, y)
             items_to_place -= 1

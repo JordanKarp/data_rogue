@@ -120,7 +120,7 @@ vertical_window = new_tile(
 
 horizontal_wall = new_tile(
     walkable=False,
-    transparent=True,
+    transparent=False,
     dark=(ord("─"), (0, 0, 0), (70, 70, 70)),
     light=(ord("─"), (0, 0, 0), (100, 100, 100)),
 )

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+
+import lzma
+import pickle
 from typing import TYPE_CHECKING
 from tcod.console import Console
 from tcod.map import compute_fov
@@ -51,24 +54,26 @@ class Engine:
         # If a tile is "visible" it should be added to "explored".
         self.game_map.explored |= self.game_map.visible
 
-    def update_camera(self, map_width, map_height) -> None:
-        self.camera.update(
-            target_x=self.player.x,
-            target_y=self.player.y,
-            map_width=map_width,
-            map_height=map_height,
-        )
+    def update_camera(self) -> None:
+        self.camera.update(target_x=self.player.x, target_y=self.player.y)
 
     def update_gameclock(self) -> None:
         self.clock.increment()
 
     def render(self, console: Console) -> None:
+        self.update_camera()
+
         self.game_map.render(console)
 
         console.print(
             x=1,
             y=46,
             string=f"{self.clock.time.strftime('%b %d - %H:%M %p')}",
+        )
+        console.print(
+            x=1,
+            y=44,
+            string=f"X: {self.player.x:3d}     Y: {self.player.y:3d}",
         )
 
         self.message_log.render(console=console, x=21, y=45, width=40, height=5)
@@ -81,3 +86,9 @@ class Engine:
         )
 
         render_names_at_mouse_location(console=console, x=21, y=44, engine=self)
+
+    def save_as(self, filename: str) -> None:
+        """Save this Engine instance as a compressed file."""
+        save_data = lzma.compress(pickle.dumps(self))
+        with open(filename, "wb") as f:
+            f.write(save_data)

@@ -78,7 +78,6 @@ class GameMap:
         #     choicelist=[self.tiles["light"], self.tiles["dark"]],
         #     default=tile_types.SHROUD,
         # )
-
         vx, vy = self.camera.viewport()
 
         # Slice world arrays in (x, y) order

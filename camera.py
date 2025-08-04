@@ -2,13 +2,17 @@ import numpy as np
 
 
 class Camera:
-    def __init__(self, screen_width: int, screen_height: int):
+    def __init__(
+        self, screen_width: int, screen_height: int, map_width: int, map_height: int
+    ):
         self.screen_width = screen_width
         self.screen_height = screen_height
+        self.map_width = map_width
+        self.map_height = map_height
         self.x = 0
         self.y = 0
 
-    def update(self, target_x: int, target_y: int, map_width: int, map_height: int):
+    def update(self, target_x: int, target_y: int):
         """Center camera on target and clamp to map bounds."""
         half_w = self.screen_width // 2
         half_h = self.screen_height // 2
@@ -18,8 +22,8 @@ class Camera:
         self.y = target_y - half_h
 
         # Clamp so camera never shows outside the map
-        self.x = max(0, min(self.x, map_width - self.screen_width))
-        self.y = max(0, min(self.y, map_height - self.screen_height))
+        self.x = max(0, min(self.x, self.map_width - self.screen_width))
+        self.y = max(0, min(self.y, self.map_height - self.screen_height))
 
     def viewport(self) -> tuple[slice, slice]:
         """Return x and y slices for visible area."""
