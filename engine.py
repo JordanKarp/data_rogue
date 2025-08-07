@@ -9,6 +9,7 @@ from tcod.map import compute_fov
 from libtcodpy import FOV_SYMMETRIC_SHADOWCAST, FOV_BASIC
 
 # from actions import EscapeAction, MovementAction
+import color
 from camera import Camera
 from input_handlers import MainGameEventHandler
 from game_clock import GameClock
@@ -20,10 +21,12 @@ if TYPE_CHECKING:
     from entity import Actor
     from input_handlers import EventHandler
     from game_map import GameMap
+    from game_world import GameWorld
 
 
 class Engine:
     game_map: GameMap
+    game_world: GameWorld
 
     def __init__(self, player: Actor, camera: Camera):
         self.event_handler: EventHandler = MainGameEventHandler(self)
@@ -67,8 +70,11 @@ class Engine:
 
         console.print(
             x=1,
-            y=46,
+            y=48,
             string=f"{self.clock.time.strftime('%b %d - %H:%M %p')}",
+        )
+        console.print(
+            x=1, y=46, string=f"Level: {self.player.experience.current_level}"
         )
         console.print(
             x=1,
@@ -83,6 +89,20 @@ class Engine:
             current_value=self.player.fighter.hp,
             maximum_value=self.player.fighter.max_hp,
             total_width=20,
+            x=0,
+            y=45,
+            display_text="HP: ",
+            bar_color=color.red,
+        )
+        render_bar(
+            console=console,
+            current_value=self.player.experience.current_xp,
+            maximum_value=self.player.experience.experience_to_next_level,
+            total_width=20,
+            x=0,
+            y=47,
+            display_text=f" XP: ",
+            bar_color=color.blue,
         )
 
         render_names_at_mouse_location(console=console, x=21, y=44, engine=self)

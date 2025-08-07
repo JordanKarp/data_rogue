@@ -1,5 +1,7 @@
 from typing import Tuple
 
+import ultracolors as c
+import color
 import numpy as np  # type: ignore
 
 # Tile graphics structured type compatible with Console.tiles_rgb.
@@ -37,10 +39,22 @@ SHROUD = np.array((ord(" "), (255, 255, 255), (20, 20, 20)), dtype=graphic_dt)
 
 
 tree = new_tile(
-    walkable=True,
-    transparent=False,
-    dark=(ord("↨"), (0, 255, 0), (30, 30, 30)),
-    light=(ord("↨"), (0, 255, 0), (50, 50, 150)),
+    walkable=False,
+    transparent=True,
+    dark=(ord("↨"), (0, 65, 0), color.dark_soil),
+    light=(ord("↨"), (0, 205, 0), color.soil),
+)
+green_tree = new_tile(
+    walkable=False,
+    transparent=True,
+    dark=(ord("↨"), (0, 65, 0), color.dark_soil),
+    light=(ord("↨"), (0, 155, 0), color.soil),
+)
+dark_green_tree = new_tile(
+    walkable=False,
+    transparent=True,
+    dark=(ord("↨"), (0, 55, 0), color.dark_soil),
+    light=(ord("↨"), (0, 85, 0), color.soil),
 )
 chair_horiz = new_tile(
     walkable=True,
@@ -53,7 +67,7 @@ chair_horiz = new_tile(
 road = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord(" "), (255, 255, 255), (40, 40, 40)),
+    dark=(ord(" "), (225, 225, 255), (40, 40, 40)),
     light=(ord(" "), (255, 255, 255), (70, 70, 70)),
 )
 
@@ -72,13 +86,13 @@ road_divider_vert = new_tile(
 road_divider_intersection = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord("╬"), (255, 255, 0), (40, 40, 40)),
+    dark=(ord("╬"), (225, 225, 0), (40, 40, 40)),
     light=(ord("╬"), (255, 255, 0), (70, 70, 70)),
 )
 stop_line_vert = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord("▐"), (255, 255, 255), (40, 40, 40)),
+    dark=(ord("▐"), (225, 225, 225), (40, 40, 40)),
     light=(ord("▐"), (255, 255, 255), (70, 70, 70)),
 )
 stop_line_horiz = new_tile(
@@ -90,111 +104,130 @@ stop_line_horiz = new_tile(
 cement = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord(" "), (255, 255, 255), (70, 70, 70)),
+    dark=(ord(" "), (225, 225, 225), (70, 70, 70)),
     light=(ord(" "), (255, 255, 255), (100, 100, 100)),
 )
 floor = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord(" "), (255, 255, 255), (100, 100, 100)),
+    dark=(ord(" "), (225, 225, 225), (100, 100, 100)),
     light=(ord(" "), (255, 255, 255), (130, 130, 130)),
 )
 wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("█"), (255, 255, 255), (30, 30, 30)),
+    dark=(ord("█"), (225, 225, 225), (30, 30, 30)),
     light=(ord("█"), (255, 255, 255), (50, 50, 150)),
 )
 vertical_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("│"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("│"), (0, 0, 0), (100, 100, 100)),
+    dark=(ord("║"), (0, 0, 0), (70, 70, 70)),
+    light=(ord("║"), (30, 30, 30), (100, 100, 100)),
 )
 vertical_window = new_tile(
     walkable=False,
     transparent=True,
-    dark=(ord("║"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("║"), (0, 0, 0), (100, 100, 100)),
+    dark=(ord("│"), (0, 0, 0), (70, 70, 70)),
+    light=(ord("│"), (30, 30, 30), (100, 100, 100)),
 )
 
 horizontal_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("─"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("─"), (0, 0, 0), (100, 100, 100)),
+    dark=(ord("═"), (0, 0, 0), (70, 70, 70)),
+    light=(ord("═"), (30, 30, 30), (100, 100, 100)),
 )
 horizontal_window = new_tile(
     walkable=False,
     transparent=True,
-    dark=(ord("═"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("═"), (0, 0, 0), (100, 100, 100)),
+    dark=(ord("─"), (0, 0, 0), (70, 70, 70)),
+    light=(ord("─"), (30, 30, 30), (100, 100, 100)),
 )
 
 cross_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("┼"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("┼"), (0, 0, 0), (100, 100, 100)),
+    dark=(ord("╬"), (0, 0, 0), (70, 70, 70)),
+    light=(ord("╬"), (30, 30, 30), (100, 100, 100)),
 )
 left_t_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("┤"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("┤"), (0, 0, 0), (100, 100, 100)),
+    dark=(ord("╣"), (0, 0, 0), (70, 70, 70)),
+    light=(ord("╣"), (30, 30, 30), (100, 100, 100)),
 )
 right_t_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("├"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("├"), (0, 0, 0), (100, 100, 100)),
+    dark=(ord("╠"), (0, 0, 0), (70, 70, 70)),
+    light=(ord("╠"), (30, 30, 30), (100, 100, 100)),
 )
 up_t_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("┴"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("┴"), (0, 0, 0), (100, 100, 100)),
+    dark=(ord("╩"), (0, 0, 0), (70, 70, 70)),
+    light=(ord("╩"), (30, 30, 30), (100, 100, 100)),
 )
 down_t_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("┬"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("┬"), (0, 0, 0), (100, 100, 100)),
+    dark=(ord("╦"), (0, 0, 0), (70, 70, 70)),
+    light=(ord("╦"), (30, 30, 30), (100, 100, 100)),
 )
 top_left_corner_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("┌"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("┌"), (0, 0, 0), (100, 100, 100)),
+    dark=(ord("╔"), (0, 0, 0), (70, 70, 70)),
+    light=(ord("╔"), (30, 30, 30), (100, 100, 100)),
 )
 bottom_left_corner_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("└"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("└"), (0, 0, 0), (100, 100, 100)),
+    dark=(ord("╚"), (0, 0, 0), (70, 70, 70)),
+    light=(ord("╚"), (30, 30, 30), (100, 100, 100)),
 )
 top_right_corner_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("┐"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("┐"), (0, 0, 0), (100, 100, 100)),
+    dark=(ord("╗"), (0, 0, 0), (70, 70, 70)),
+    light=(ord("╗"), (30, 30, 30), (100, 100, 100)),
 )
 bottom_right_corner_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("┘"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("┘"), (0, 0, 0), (100, 100, 100)),
+    dark=(ord("╝"), (0, 0, 0), (70, 70, 70)),
+    light=(ord("╝"), (30, 30, 30), (100, 100, 100)),
 )
 
 
 door = new_tile(
     walkable=True,
     transparent=False,
-    dark=(ord("+"), (255, 255, 255), (70, 70, 70)),
+    dark=(ord("+"), (225, 225, 225), (70, 70, 70)),
     light=(ord("+"), (255, 255, 255), (100, 100, 100)),
 )
 
+bookcase_full = new_tile(
+    walkable=False,
+    transparent=False,
+    dark=(ord("π"), (225, 225, 225), (70, 70, 70)),
+    light=(ord("π"), (255, 255, 255), (100, 100, 100)),
+)
+bookcase_empty = new_tile(
+    walkable=False,
+    transparent=False,
+    dark=(ord("Σ"), (225, 225, 225), (70, 70, 70)),
+    light=(ord("Σ"), (255, 255, 255), (100, 100, 100)),
+)
+
+BOOKCASE_TILES = [bookcase_empty, bookcase_full]
+
+TREE_TILES = [tree, green_tree, dark_green_tree]
+
 EMPTY_TILES = [cement, floor, None]
+
+ROAD_TILES = [road, road_divider_intersection, road_divider_horiz, road_divider_vert]
 
 INTERSECTION_WALL_TILES = [
     bottom_left_corner_wall,

@@ -7,10 +7,10 @@ from rectangular_structure import RectangularStructure
 class RectangularRoad(RectangularStructure):
     def __init__(self, x: int, y: int, width: int, height: int, is_vert: bool):
 
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
+        # self.x1 = x
+        # self.y1 = y
+        # self.width = width
+        # self.height = height
         self.is_vert = is_vert
         super().__init__(x, y, width, height)
 

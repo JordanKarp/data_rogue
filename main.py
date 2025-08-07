@@ -17,8 +17,8 @@ def save_game(handler: input_handlers.BaseEventHandler, filename: str) -> None:
 
 
 def main() -> None:
-    terminal_width = 80
-    terminal_height = 50
+    terminal_width = 320
+    terminal_height = 200
 
     tileset = tcod.tileset.load_tilesheet(
         "JK_Fnord_16x16.png",
@@ -36,7 +36,9 @@ def main() -> None:
         title="Data Rogue",
         vsync=True,
     ) as context:
-        root_console = tcod.console.Console(terminal_width, terminal_height, order="F")
+        root_console = tcod.console.Console(
+            terminal_width // 4, terminal_height // 4, order="F"
+        )
 
         try:
             while True:

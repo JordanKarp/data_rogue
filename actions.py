@@ -3,6 +3,7 @@ from __future__ import annotations
 import color
 import exceptions
 
+
 from typing import Optional, Tuple, TYPE_CHECKING
 
 
@@ -155,10 +156,42 @@ class MeleeAction(ActionWithDirection):
             )
 
 
+class SpeakAction(ActionWithDirection):
+    def perform(self) -> None:
+        target = self.target_actor
+
+        if not target:
+            # No entity to attack.
+            raise exceptions.Impossible("Nothing to speak to.")
+
+        self.engine.message_log.add_message("You're trying to speak!", color.white)
+
+        # damage = self.entity.fighter.power - target.fighter.defense
+
+        # attack_desc = f"{self.entity.name.capitalize()} attacks {target.name}"
+
+        # if self.entity is self.engine.player:
+        #     attack_color = color.player_atk
+        # else:
+        #     attack_color = color.enemy_atk
+
+        # if damage > 0:
+        #     self.engine.message_log.add_message(
+        #         f"{attack_desc} for {damage} hit points.", attack_color
+        #     )
+        #     target.fighter.hp -= damage
+        # else:
+        #     self.engine.message_log.add_message(
+        #         f"{attack_desc} but does no damage.", attack_color
+        #     )
+
+
 class BumpAction(ActionWithDirection):
     def perform(self) -> None:
 
         if self.target_actor:
+            if self.target_actor.name == "NPC":
+                return SpeakAction(self.entity, self.dx, self.dy).perform()
             return MeleeAction(self.entity, self.dx, self.dy).perform()
         else:
             return MovementAction(self.entity, self.dx, self.dy).perform()
@@ -167,3 +200,17 @@ class BumpAction(ActionWithDirection):
 class WaitAction(Action):
     def perform(self) -> None:
         pass
+
+
+class LeaveMapAction(Action):
+    def perform(self) -> None:
+        """
+        Leave the map, if any possible at the entity's location.
+        """
+        if (
+            self.entity.x,
+            self.entity.y,
+        ) not in self.engine.game_map.exit_locations:
+            raise exceptions.Impossible("There is no exit here.")
+        self.engine.game_world.generate_new_map()
+        self.engine.message_log.add_message("You leave this city.", color.white)

@@ -13,8 +13,24 @@ class RectangularStructure:
         self.height = height
 
     @property
-    def as_tuple(self) -> Tuple[int, int, int, int]:
-        return self.x1, self.y1, self.width, self.height
+    def x(self):
+        return self.x1
+
+    @property
+    def y(self):
+        return self.y1
+
+    @property
+    def w(self):
+        return self.width
+
+    @property
+    def h(self):
+        return self.height
+
+    @property
+    def as_tuple(self) -> List[int, int, int, int]:
+        return [self.x1, self.y1, self.width, self.height]
 
     @property
     def center(self) -> Tuple[int, int]:
@@ -36,6 +52,41 @@ class RectangularStructure:
             and self.y1 <= other.y2
             and self.y2 >= other.y1
         )
+
+    def abuts(self, other: "RectangularStructure") -> list[tuple[int, int]]:
+        """
+        Return a list of (x, y) coordinates along the common boundary between this rectangle and another.
+        Coordinates are inclusive.
+        """
+        coords = []
+
+        # Vertical boundaries
+        if self.x2 == other.x1:  # self right edge touches other's left edge
+            y_start = max(self.y1, other.y1)
+            y_end = min(self.y2, other.y2)
+            if y_start <= y_end:
+                coords.extend([(self.x2, y) for y in range(y_start, y_end + 1)])
+
+        if self.x1 == other.x2:  # self left edge touches other's right edge
+            y_start = max(self.y1, other.y1)
+            y_end = min(self.y2, other.y2)
+            if y_start <= y_end:
+                coords.extend([(self.x1, y) for y in range(y_start, y_end + 1)])
+
+        # Horizontal boundaries
+        if self.y2 == other.y1:  # self top touches other's bottom
+            x_start = max(self.x1, other.x1)
+            x_end = min(self.x2, other.x2)
+            if x_start <= x_end:
+                coords.extend([(x, self.y2) for x in range(x_start, x_end + 1)])
+
+        if self.y1 == other.y2:  # self bottom touches other's top
+            x_start = max(self.x1, other.x1)
+            x_end = min(self.x2, other.x2)
+            if x_start <= x_end:
+                coords.extend([(x, self.y1) for x in range(x_start, x_end + 1)])
+
+        return coords
 
     @property
     def edges_and_corners(self) -> List[Tuple[int, int]]:

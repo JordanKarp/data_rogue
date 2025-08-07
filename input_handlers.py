@@ -6,7 +6,14 @@ import os
 import tcod.event
 from tcod import libtcodpy
 
-from actions import Action, BumpAction, DropItem, PickupAction, WaitAction
+from actions import (
+    Action,
+    BumpAction,
+    DropItem,
+    PickupAction,
+    WaitAction,
+    LeaveMapAction,
+)
 import color
 import exceptions
 
@@ -121,6 +128,8 @@ class EventHandler(BaseEventHandler):
             if not self.engine.player.is_alive:
                 # The player was killed sometime during or after the action.
                 return GameOverEventHandler(self.engine)
+            elif self.engine.player.experience.requires_level_up:
+                return LevelUpEventHandler(self.engine)
             return MainGameEventHandler(self.engine)  # Return to the main handler.
         return self
 
@@ -182,6 +191,115 @@ class AskUserEventHandler(EventHandler):
         return MainGameEventHandler(self.engine)
 
 
+class CharacterScreenEventHandler(AskUserEventHandler):
+    TITLE = "Character Information"
+
+    def on_render(self, console: tcod.Console) -> None:
+        super().on_render(console)
+
+        x = 40 if self.engine.player.x <= 30 else 0
+        y = 0
+
+        width = len(self.TITLE) + 4
+
+        console.draw_frame(
+            x=x,
+            y=y,
+            width=width,
+            height=7,
+            title=self.TITLE,
+            clear=True,
+            fg=(255, 255, 255),
+            bg=(0, 0, 0),
+        )
+
+        console.print(
+            x=x + 1,
+            y=y + 1,
+            string=f"Level: {self.engine.player.experience.current_level}",
+        )
+        console.print(
+            x=x + 1, y=y + 2, string=f"XP: {self.engine.player.experience.current_xp}"
+        )
+        console.print(
+            x=x + 1,
+            y=y + 3,
+            string=f"XP for next Level: {self.engine.player.experience.experience_to_next_level}",
+        )
+
+        console.print(
+            x=x + 1, y=y + 4, string=f"Attack: {self.engine.player.fighter.power}"
+        )
+        console.print(
+            x=x + 1, y=y + 5, string=f"Defense: {self.engine.player.fighter.defense}"
+        )
+
+
+class LevelUpEventHandler(AskUserEventHandler):
+    TITLE = "Level Up"
+
+    def on_render(self, console: tcod.Console) -> None:
+        super().on_render(console)
+
+        x = 40 if self.engine.player.x <= 30 else 0
+        console.draw_frame(
+            x=x,
+            y=0,
+            width=35,
+            height=8,
+            title=self.TITLE,
+            clear=True,
+            fg=(255, 255, 255),
+            bg=(0, 0, 0),
+        )
+
+        console.print(x=x + 1, y=1, string="Congratulations! You level up!")
+        console.print(x=x + 1, y=2, string="Select an attribute to increase.")
+
+        console.print(
+            x=x + 1,
+            y=4,
+            string=f"a) Constitution (+20 HP, from {self.engine.player.fighter.max_hp})",
+        )
+        console.print(
+            x=x + 1,
+            y=5,
+            string=f"b) Strength (+1 attack, from {self.engine.player.fighter.power})",
+        )
+        console.print(
+            x=x + 1,
+            y=6,
+            string=f"c) Agility (+1 defense, from {self.engine.player.fighter.defense})",
+        )
+
+    def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
+        key = event.sym
+        index = key - tcod.event.K_a
+
+        if 0 <= index <= 2:
+            player = self.engine.player
+            if index == 0:
+                player.experience.increase_max_hp()
+            elif index == 1:
+                player.experience.increase_power()
+            else:
+                player.experience.increase_defense()
+        else:
+            self.engine.message_log.add_message("Invalid entry.", color.invalid)
+
+            return None
+
+        return super().ev_keydown(event)
+
+    def ev_mousebuttondown(
+        self, event: tcod.event.MouseButtonDown
+    ) -> Optional[ActionOrHandler]:
+        """
+        Don't allow the player to click to exit the menu, like normal.
+        """
+        return None
+
+
 class InventoryEventHandler(AskUserEventHandler):
     """This handler lets the user select an item.
 
@@ -200,14 +318,8 @@ class InventoryEventHandler(AskUserEventHandler):
 
         height = number_of_items_in_inventory + 2
 
-        if height <= 3:
-            height = 3
-
-        if self.engine.player.x <= 30:
-            x = 40
-        else:
-            x = 0
-
+        height = max(height, 3)
+        x = 40 if self.engine.player.x <= 30 else 0
         y = 0
 
         width = len(self.TITLE) + 4
@@ -231,11 +343,11 @@ class InventoryEventHandler(AskUserEventHandler):
             console.print(x + 1, y + 1, "(Empty)")
 
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
-        player = self.engine.player
         key = event.sym
         index = key - tcod.event.KeySym.a
 
         if 0 <= index <= 26:
+            player = self.engine.player
             try:
                 selected_item = player.inventory.items[index]
             except IndexError:
@@ -289,36 +401,39 @@ class SelectIndexHandler(AskUserEventHandler):
         """Check for key movement or confirmation keys."""
         key = event.sym
         if key in MOVE_KEYS:
-            modifier = 1  # Holding modifier keys will speed up key movement.
-            if event.mod & (tcod.event.Modifier.LSHIFT | tcod.event.Modifier.RSHIFT):
-                modifier *= 5
-            if event.mod & (tcod.event.Modifier.LCTRL | tcod.event.Modifier.RCTRL):
-                modifier *= 10
-            if event.mod & (tcod.event.Modifier.LALT | tcod.event.Modifier.RALT):
-                modifier *= 20
-
-            x, y = self.engine.mouse_location
-            dx, dy = MOVE_KEYS[key]
-            x += dx * modifier
-            y += dy * modifier
-            # Clamp the cursor index to the map size.
-            x = max(0, min(x, self.engine.game_map.width - 1))
-            y = max(0, min(y, self.engine.game_map.height - 1))
-            self.engine.mouse_location = x, y
-            return None
+            return self.move_cursor(event, key)
         elif key in CONFIRM_KEYS:
             wx, wy = self.engine.camera.screen_to_world(*self.engine.mouse_location)
             return self.on_index_selected(wx, wy)
         return super().ev_keydown(event)
 
+    # TODO Rename this here and in `ev_keydown`
+    def move_cursor(self, event, key):
+        modifier = 1  # Holding modifier keys will speed up key movement.
+        if event.mod & (tcod.event.Modifier.LSHIFT | tcod.event.Modifier.RSHIFT):
+            modifier *= 5
+        if event.mod & (tcod.event.Modifier.LCTRL | tcod.event.Modifier.RCTRL):
+            modifier *= 10
+        if event.mod & (tcod.event.Modifier.LALT | tcod.event.Modifier.RALT):
+            modifier *= 20
+
+        x, y = self.engine.mouse_location
+        dx, dy = MOVE_KEYS[key]
+        x += dx * modifier
+        y += dy * modifier
+        # Clamp the cursor index to the map size.
+        x = max(0, min(x, self.engine.game_map.width - 1))
+        y = max(0, min(y, self.engine.game_map.height - 1))
+        self.engine.mouse_location = x, y
+        return None
+
     def ev_mousebuttondown(
         self, event: tcod.event.MouseButtonDown
     ) -> Optional[ActionOrHandler]:
         """Left click confirms a selection."""
-        if self.engine.game_map.in_bounds(*event.tile):
-            if event.button == 1:
-                wx, wy = self.engine.camera.screen_to_world(*event.tile)
-                return self.on_index_selected(wx, wy)
+        if self.engine.game_map.in_bounds(*event.tile) and event.button == 1:
+            wx, wy = self.engine.camera.screen_to_world(*event.tile)
+            return self.on_index_selected(wx, wy)
         return super().ev_mousebuttondown(event)
 
     def on_index_selected(self, x: int, y: int) -> Optional[ActionOrHandler]:
@@ -405,6 +520,10 @@ class MainGameEventHandler(EventHandler):
             return InventoryDropHandler(self.engine)
         elif key == tcod.event.KeySym.SLASH:
             return LookHandler(self.engine)
+        elif key == tcod.event.KeySym.p:
+            action = LeaveMapAction(player)
+        elif key == tcod.event.KeySym.c:
+            return CharacterScreenEventHandler(self.engine)
 
         elif key == tcod.event.KeySym.ESCAPE:
             raise SystemExit()

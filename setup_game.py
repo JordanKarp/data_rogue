@@ -16,8 +16,9 @@ import color
 from camera import Camera
 from engine import Engine
 import entity_factory
+from game_world import GameWorld
 import input_handlers
-from city_gen import new_generate_city
+from city_gen import generate_city
 
 
 def new_game() -> Engine:
@@ -26,8 +27,8 @@ def new_game() -> Engine:
     map_screen_width = 80
     map_screen_height = 43
 
-    map_width = 300
-    map_height = 260
+    map_width = 200
+    map_height = 200
 
     player = copy.deepcopy(entity_factory.player)
     camera = Camera(
@@ -38,11 +39,13 @@ def new_game() -> Engine:
     )
     engine = Engine(player=player, camera=camera)
 
-    engine.game_map = new_generate_city(
-        map_width=map_width,
-        map_height=map_height,
-        engine=engine,
-    )
+    # engine.game_map = new_generate_city(
+    #     map_width=map_width,
+    #     map_height=map_height,
+    #     engine=engine,
+    # )
+    engine.game_world = GameWorld(engine=engine)
+    engine.game_world.generate_new_map()
     engine.update_fov()
 
     engine.message_log.add_message(

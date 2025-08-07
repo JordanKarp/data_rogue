@@ -55,3 +55,5 @@ class Fighter(BaseComponent):
         self.parent.render_order = RenderOrder.CORPSE
 
         self.engine.message_log.add_message(death_message, death_message_color)
+
+        self.engine.player.experience.add_xp(self.parent.experience.xp_given)

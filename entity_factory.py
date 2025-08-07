@@ -1,35 +1,49 @@
-from components.ai import HostileEnemy
+from components import ai
 from components import consumable
 
 from components.fighter import Fighter
 from entity import Actor, Item
 from components.inventory import Inventory
+from components.experience import Experience
 
 
 player = Actor(
-    char="J",
+    char="σ",
     color=(127, 255, 127),
     name="Player",
-    ai_cls=HostileEnemy,
+    ai_cls=ai.HostileEnemy,
     fighter=Fighter(hp=30, defense=2, power=5),
     inventory=Inventory(capacity=26),
+    experience=Experience(level_up_base=200),
 )
 
 orc = Actor(
-    char="o",
-    color=(63, 127, 63),
+    char="µ",
+    color=(140, 234, 96),
     name="Orc",
-    ai_cls=HostileEnemy,
+    ai_cls=ai.HostileEnemy,
     fighter=Fighter(hp=10, defense=0, power=3),
     inventory=Inventory(capacity=0),
+    experience=Experience(xp_given=135),
+)
+
+npc = Actor(
+    char="☺",
+    color=(230, 230, 100),
+    name="NPC",
+    ai_cls=ai.WandererAI,
+    fighter=Fighter(hp=30, defense=5, power=5),
+    inventory=Inventory(capacity=5),
+    experience=Experience(xp_given=0),
 )
 troll = Actor(
     char="↨",
     color=(0, 255, 0),
     name="Troll",
-    ai_cls=HostileEnemy,
+    ai_cls=ai.HostileEnemy,
     fighter=Fighter(hp=16, defense=1, power=4),
     inventory=Inventory(capacity=0),
+    experience=Experience(xp_given=100),
 )
 health_potion = Item(
     char="*",

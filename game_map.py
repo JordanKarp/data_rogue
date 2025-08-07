@@ -22,6 +22,7 @@ class GameMap:
         self.entities = set(entities)
         self.tiles = np.full((width, height), fill_value=tile_types.cement, order="F")
         self.camera = self.engine.camera
+        self.exit_locations = []
 
         # Tiles the player can currently see
         self.visible = np.full((width, height), fill_value=False, order="F")
@@ -73,25 +74,57 @@ class GameMap:
         If it isn't, but it's in the "explored" array, then draw it with the "dark" colors.
         Otherwise, the default is "SHROUD".
         """
-        # console.rgb[0 : self.width, 0 : self.height] = np.select(
-        #     condlist=[self.visible, self.explored],
-        #     choicelist=[self.tiles["light"], self.tiles["dark"]],
-        #     default=tile_types.SHROUD,
+
+        # vx, vy = self.camera.viewport()
+        # # print(self.visible.shape)
+        # # Slice world arrays in (x, y) order
+        # visible_slice = self.visible[vx, vy]
+        # explored_slice = self.explored[vx, vy]
+        # light_tiles = self.tiles["light"][vx, vy]
+        # dark_tiles = self.tiles["dark"][vx, vy]
+        # # print(vy, visible_slice.shape)
+
+        # console.rgb[0 : self.camera.screen_width, 0 : self.camera.screen_height] = (
+        #     np.select(
+        #         condlist=[visible_slice, explored_slice],
+        #         choicelist=[light_tiles, dark_tiles],
+        #         default=tile_types.SHROUD,
+        #     )
         # )
+
         vx, vy = self.camera.viewport()
 
-        # Slice world arrays in (x, y) order
-        visible_slice = self.visible[vx, vy]
-        explored_slice = self.explored[vx, vy]
-        light_tiles = self.tiles["light"][vx, vy]
-        dark_tiles = self.tiles["dark"][vx, vy]
+        # Clamp viewport to map bounds
+        map_x1, map_x2 = vx.start, min(vx.stop, self.width)
+        map_y1, map_y2 = vy.start, min(vy.stop, self.height)
 
+        # Actual visible size from map
+        slice_w = map_x2 - map_x1
+        slice_h = map_y2 - map_y1
+
+        # Create a full SHROUD screen buffer
+        render_output = np.full(
+            (self.camera.screen_width, self.camera.screen_height),
+            tile_types.SHROUD,
+            dtype=self.tiles["light"].dtype,
+        )
+
+        # Fill only the valid map area
+        render_output[0:slice_w, 0:slice_h] = np.select(
+            condlist=[
+                self.visible[map_x1:map_x2, map_y1:map_y2],
+                self.explored[map_x1:map_x2, map_y1:map_y2],
+            ],
+            choicelist=[
+                self.tiles["light"][map_x1:map_x2, map_y1:map_y2],
+                self.tiles["dark"][map_x1:map_x2, map_y1:map_y2],
+            ],
+            default=tile_types.SHROUD,
+        )
+
+        # Assign to console
         console.rgb[0 : self.camera.screen_width, 0 : self.camera.screen_height] = (
-            np.select(
-                condlist=[visible_slice, explored_slice],
-                choicelist=[light_tiles, dark_tiles],
-                default=tile_types.SHROUD,
-            )
+            render_output
         )
 
         entities_sorted_for_rendering = sorted(
@@ -102,7 +135,14 @@ class GameMap:
             entities_sorted_for_rendering
         ):
             if self.visible[ent.x, ent.y]:
-                console.print(x=sx, y=sy, string=ent.char, fg=ent.color)
+                background_color = tuple(self.tiles[(ent.x, ent.y)]["light"][2])
+                console.print(
+                    x=sx,
+                    y=sy,
+                    string=ent.char,
+                    fg=ent.color,
+                    bg=background_color,
+                )
 
         # for entity in entities_sorted_for_rendering:
         #     # Only print entities that are in the FOV

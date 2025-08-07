@@ -49,6 +49,24 @@ class BaseAI(Action):
         return [(index[0], index[1]) for index in path]
 
 
+class PassiveNPC(BaseAI):
+    def __init__(self, entity: Actor):
+        super().__init__(entity)
+
+    def perform(self) -> None:
+        return WaitAction(self.entity).perform()
+
+
+class WandererAI(BaseAI):
+    def __init__(self, entity: Actor):
+        super().__init__(entity)
+
+    def perform(self) -> None:
+        # Pick a random walkable adjacent tile
+        dx, dy = random.choice([(1, 0), (-1, 0), (0, 1), (0, -1), (0, 0)])
+        return MovementAction(self.entity, dx, dy).perform()
+
+
 class HostileEnemy(BaseAI):
     def __init__(self, entity: Actor):
         super().__init__(entity)

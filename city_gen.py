@@ -9,156 +9,249 @@ import tile_types
 import entity_factory
 from utility import slices_to_xys
 
+CITY_DEFAULTS = {
+    "MAP_WIDTH": 80,
+    "MAP_HEIGHT": 43,
+    "MIN_BLOCK_SIZE": 10,
+    "TREE_BORDER_WIDTH": 6,
+    "ROAD_WIDTH": 3,
+}
 
-def new_generate_city(engine, map_width, map_height):
-    MIN_BLOCK_SIZE = 10
-    BLOCK_DIVISION_DEPTH = 9
 
+def generate_city(
+    engine,
+    map_width=CITY_DEFAULTS["MAP_WIDTH"],
+    map_height=CITY_DEFAULTS["MAP_HEIGHT"],
+    city_details=CITY_DEFAULTS,
+):
     player = engine.player
     city = GameMap(engine, map_width, map_height, entities=[player])
 
-    # city_blocks, road_dimensions = generate_city_blocks(
-    #     city_width=map_width,
-    #     city_height=map_height,
-    #     block_min=10,
-    #     block_max=15,
-    # )
-    city_blocks, road_dimensions = subdivide_grid_with_roads(
-        map_width, map_height, MIN_BLOCK_SIZE, BLOCK_DIVISION_DEPTH
+    # generate_tree_border(city=city, border_width=CITY_DEFAULTS["TREE_BORDER_WIDTH"])
+    border_width = CITY_DEFAULTS["TREE_BORDER_WIDTH"]
+    generate_tree_border(city=city, border_width=border_width)
+    blocks, road_spots = divide_cityspace(
+        city, border_width, CITY_DEFAULTS["MIN_BLOCK_SIZE"]
     )
-    roads = generate_roads(city, road_dimensions)
-    structures = generate_structures(city, city_blocks)
+    road_spots = generate_city_out_road(city, road_spots, border_width)
+    roads = generate_roads(city, road_spots)
+    structures = generate_structures(city, blocks)
+    for structure in structures:
+        rooms, doors = split_and_place_doors(structure)
+        for room in rooms:
+            generate_walls(city, room)
+        place_tiles(city, doors, [tile_types.door])
+        # for door in doors:
+        #     city.tiles[door] = tile_types.door
+        generate_outer_doors(city, structure)
     generate_actors(city, player, structures, roads)
+    player.place(20, 20, city)
 
     return city
 
 
-def subdivide_grid_with_roads(
-    width: int = 40, height: int = 20, min_size: int = 6, max_depth: int = 4
-) -> Tuple[List[Tuple[int, int, int, int]], List[Tuple[int, int, int, int]]]:
+def split_rectangle(rect: RectangularStructure, min_size=3, split_chance=0.6):
     """
-    Returns two lists of rectangles:
-      - blocks: (x, y, width, height) for city blocks
-      - roads:  (x, y, width, height) for roads
+    Split a rectangle into rooms of various sizes.
+    Returns a list of RectangularStructure rooms.
     """
-    ROAD_WIDTH = 3
-    blocks: List[RectangularStructure] = []
-    roads: List[RectangularStructure] = []
+    rooms = []
 
-    def split(x: int, y: int, w: int, h: int, depth: int):
-        # Stop splitting if block is too small or depth limit is reached
-        if depth == 0 or (
-            w < min_size * 2 + ROAD_WIDTH and h < min_size * 2 + ROAD_WIDTH
-        ):
-            blocks.append(RectangularStructure(x + 1, y + 1, w - 3, h - 3))
+    def _split(r: RectangularStructure):
+        # Stop if too small
+        if r.width <= min_size and r.height <= min_size:
+            rooms.append(r)
             return
 
+        # Randomly decide to split vertically or horizontally
+        if random.random() < split_chance:
+            # Vertical split (two side-by-side rooms)
+            if r.width > min_size * 2 and (
+                random.choice([True, False]) or r.height <= min_size * 2
+            ):
+                split_at = random.randint(min_size, r.width - min_size)
+                left = RectangularStructure(r.x, r.y, split_at, r.height)
+                right = RectangularStructure(
+                    r.x + split_at, r.y, r.width - split_at, r.height
+                )
+                _split(left)
+                _split(right)
+                return
+
+            # Horizontal split (two stacked rooms)
+            if r.height > min_size * 2:
+                split_at = random.randint(min_size, r.height - min_size)
+                top = RectangularStructure(r.x, r.y, r.width, split_at)
+                bottom = RectangularStructure(
+                    r.x, r.y + split_at, r.width, r.height - split_at
+                )
+                _split(top)
+                _split(bottom)
+                return
+
+        # No split — keep as is
+        rooms.append(r)
+
+    _split(rect)
+    return rooms
+
+
+def split_and_place_doors(rect: RectangularStructure, min_size=4):
+    """Split the rectangle into rooms and place doors during each split."""
+    rooms = []
+    doors = []
+
+    def _split(r: RectangularStructure):
+        # Stop if too small
+        if r.width <= min_size and r.height <= min_size:
+            rooms.append(r)
+            return
+
+        # Decide split direction
+        if r.width > r.height and r.width >= min_size * 2:
+            # Vertical split
+            split_at = random.randint(min_size, r.width - min_size)
+            left = RectangularStructure(r.x, r.y, split_at, r.height)
+            right = RectangularStructure(
+                r.x + split_at, r.y, r.width - split_at, r.height
+            )
+
+            # Place door in the shared wall
+            door_y = random.randint(r.y + 1, r.y + r.height - 2)
+            door_x = r.x + split_at
+            doors.append((door_x, door_y))
+
+            _split(left)
+            _split(right)
+
+        elif r.height >= min_size * 2:
+            # Horizontal split
+            split_at = random.randint(min_size, r.height - min_size)
+            top = RectangularStructure(r.x, r.y, r.width, split_at)
+            bottom = RectangularStructure(
+                r.x, r.y + split_at, r.width, r.height - split_at
+            )
+
+            # Place door in the shared wall
+            door_x = random.randint(r.x + 1, r.x + r.width - 2)
+            door_y = r.y + split_at
+            doors.append((door_x, door_y))
+
+            _split(top)
+            _split(bottom)
+
+        else:
+            # No further split
+            rooms.append(r)
+
+    _split(rect)
+    return rooms, doors
+
+
+def generate_tree_border(city, border_width):
+    rows = city.height
+    cols = city.width
+    for t in range(border_width):
+        # Top and bottom row border
+        for x in range(cols):
+            place_tile(city, (x, t), tile_types.TREE_TILES)
+            place_tile(city, (x, rows - 1 - t), tile_types.TREE_TILES)
+
+        # Left and right column border
+        for y in range(rows - t):
+            place_tile(city, (t, y), tile_types.TREE_TILES)
+            place_tile(city, (cols - 1 - t, y), tile_types.TREE_TILES)
+
+
+def divide_cityspace(city, border_width, min_block_size):
+    x = border_width
+    y = border_width
+    width = city.width - (2 * border_width)
+    height = city.height - (2 * border_width)
+
+    roads = []
+    blocks = []
+
+    queue = [RectangularStructure(x, y, width, height)]
+
+    while queue:
+        block = queue.pop(0)
+        w, h = block.w, block.h
+
+        # Check if we can split further
+        if (
+            w < min_block_size * 2 + CITY_DEFAULTS["ROAD_WIDTH"]
+            and h < min_block_size * 2 + CITY_DEFAULTS["ROAD_WIDTH"]
+        ):
+            blocks.append(RectangularStructure(block.x + 1, block.y + 1, w - 3, h - 3))
+            continue
+
+        # Decide split direction
         split_horizontally = random.choice([True, False])
-        if w < min_size * 2 + ROAD_WIDTH:
+        if w < min_block_size * 2 + CITY_DEFAULTS["ROAD_WIDTH"]:
             split_horizontally = True
-        elif h < min_size * 2 + ROAD_WIDTH:
+        elif h < min_block_size * 2 + CITY_DEFAULTS["ROAD_WIDTH"]:
             split_horizontally = False
 
         if split_horizontally:
             # Horizontal split
-            split_line = random.randint(min_size, h - min_size - ROAD_WIDTH)
-            # Add the horizontal road
-            roads.append(RectangularStructure(x, y + split_line, w, ROAD_WIDTH))
-            # Split the two sub-blocks
-            split(x, y, w, split_line, depth - 1)
-            split(
-                x,
-                y + split_line + ROAD_WIDTH,
-                w,
-                h - split_line - ROAD_WIDTH,
-                depth - 1,
+            split_line = random.randint(
+                min_block_size, h - min_block_size - CITY_DEFAULTS["ROAD_WIDTH"]
+            )
+            roads.append(
+                RectangularStructure(
+                    block.x, block.y + split_line, w, CITY_DEFAULTS["ROAD_WIDTH"]
+                )
+            )
+
+            # Top block
+            queue.append(RectangularStructure(block.x, block.y, w, split_line))
+            # Bottom block
+            queue.append(
+                RectangularStructure(
+                    block.x,
+                    block.y + split_line + CITY_DEFAULTS["ROAD_WIDTH"],
+                    w,
+                    h - split_line - CITY_DEFAULTS["ROAD_WIDTH"],
+                )
             )
         else:
             # Vertical split
-            split_line = random.randint(min_size, w - min_size - ROAD_WIDTH)
-            # Add the vertical road
-            roads.append(RectangularStructure(x + split_line, y, ROAD_WIDTH, h))
-            # Split the two sub-blocks
-            split(x, y, split_line, h, depth - 1)
-            split(
-                x + split_line + ROAD_WIDTH,
-                y,
-                w - split_line - ROAD_WIDTH,
-                h,
-                depth - 1,
+            split_line = random.randint(
+                min_block_size, w - min_block_size - CITY_DEFAULTS["ROAD_WIDTH"]
+            )
+            roads.append(
+                RectangularStructure(
+                    block.x + split_line, block.y, CITY_DEFAULTS["ROAD_WIDTH"], h
+                )
             )
 
-    split(0, 0, width, height, max_depth)
-    roads = merge_continuous_roads(roads)
-    return [block.as_tuple for block in blocks], [road.as_tuple for road in roads]
+            # Left block
+            queue.append(RectangularStructure(block.x, block.y, split_line, h))
+            # Right block
+            queue.append(
+                RectangularStructure(
+                    block.x + split_line + CITY_DEFAULTS["ROAD_WIDTH"],
+                    block.y,
+                    w - split_line - CITY_DEFAULTS["ROAD_WIDTH"],
+                    h,
+                )
+            )
 
-
-def merge_continuous_roads(
-    roads: list[RectangularStructure],
-) -> list[RectangularStructure]:
-    merged = roads[:]
-    changed = True
-
-    while changed:
-        changed = False
-        new_list = []
-        skip = set()
-
-        for i, r1 in enumerate(merged):
-            if i in skip:
-                continue
-            merged_this = False
-            for j, r2 in enumerate(merged):
-                if j <= i or j in skip:
-                    continue
-
-                # Horizontal merge (same y, same width)
-                if (
-                    r1.y1 == r2.y1
-                    and r1.height == r2.height
-                    and r1.x1 + r1.width == r2.x1
-                ):
-                    new_list.append(
-                        RectangularStructure(
-                            r1.x1, r1.y1, r1.width + r2.width, r1.height
-                        )
-                    )
-                    skip.add(j)
-                    merged_this = True
-                    changed = True
-                    break
-
-                # Vertical merge (same x, same width)
-                if (
-                    r1.x1 == r2.x1
-                    and r1.width == r2.width
-                    and r1.y1 + r1.height == r2.y1
-                ):
-                    new_list.append(
-                        RectangularStructure(
-                            r1.x1, r1.y1, r1.width, r1.height + r2.height
-                        )
-                    )
-                    skip.add(j)
-                    merged_this = True
-                    changed = True
-                    break
-
-            if not merged_this:
-                new_list.append(r1)
-
-        merged = new_list
-
-    return merged
+    # Remaining blocks go to final list
+    blocks.extend(
+        RectangularStructure(block.x + 1, block.y + 1, block.w - 3, block.h - 3)
+        for block in queue
+    )
+    return [b.as_tuple for b in blocks], [r.as_tuple for r in roads]
 
 
 def generate_roads(city, road_dimensions):
     # Determine road sizes and number
-
     roads = []
 
     for x, y, w, h in road_dimensions:
-        is_vertical = True if w < h else False
+        is_vertical = w < h
         road = RectangularRoad(x, y, w, h, is_vertical)
         divider_tile = (
             tile_types.road_divider_vert
@@ -166,20 +259,67 @@ def generate_roads(city, road_dimensions):
             else tile_types.road_divider_horiz
         )
 
-        city.tiles[road.center_line] = divider_tile
-        city.tiles[road.lanes] = tile_types.road
+        place_tiles(city, road.center_line, [divider_tile])
+        place_tiles(city, road.lanes, [tile_types.road])
+        # city.tiles[road.center_line] = divider_tile
+        # city.tiles[road.lanes] = tile_types.road
 
         for other_road in roads:
-            if road.intersects(other_road):
-                generate_intersection(city, road, other_road)
-
+            if road.abuts(other_road):
+                for idx, spot in enumerate(road.abuts(other_road)):
+                    if idx <= 2:
+                        place_tile(city, spot, [tile_types.road])
+                        # city.tiles[spot] = tile_types.chair_horiz
         roads.append(road)
-
     return roads
 
 
-def generate_intersection(city, road, other_road):
-    pass
+def generate_city_out_road(city, roads, border_width):
+    w = city.width - (2 * border_width)
+    h = city.height - (2 * border_width)
+
+    random.shuffle(roads)
+    for road in roads:
+        if road[0] == border_width:
+            road[0] = 0
+            road[2] += border_width
+            city.exit_locations = [(0, road[1]), (0, road[1] + 1), (0, road[1] + 2)]
+            return roads
+        elif road[1] == border_width:
+            road[1] = 0
+            road[3] += border_width
+            city.exit_locations = [(road[0], 0), (road[0] + 1, 0), (road[0] + 2, 0)]
+            return roads
+        elif road[0] + road[2] + border_width == w:
+            road[2] += border_width
+            city.exit_locations = [
+                (road[0] + road[2], road[1]),
+                (road[0] + road[2], road[1] + 1),
+                (road[0] + road[2], road[1] + 2),
+            ]
+
+            return roads
+        elif road[1] + road[3] + border_width == h:
+            road[3] += border_width
+            city.exit_locations = [
+                (road[0], road[1] + road[3]),
+                (road[0] + 1, road[1] + road[3]),
+                (road[0] + 2, road[1] + road[3]),
+            ]
+
+            return roads
+
+
+def rect_touch_or_overlap(rects: List[Tuple[int, int, int, int]]):
+    """Return (x, y, w, h) intersections or touching edges between rects."""
+    results = []
+    for i, (x1, y1, w1, h1) in enumerate(rects):
+        for x2, y2, w2, h2 in rects[i + 1 :]:
+            ix, iy = max(x1, x2), max(y1, y2)
+            iw, ih = min(x1 + w1, x2 + w2) - ix, min(y1 + h1, y2 + h2) - iy
+            if iw >= 0 and ih >= 0:  # allow touching (== 0) or overlapping (> 0)
+                results.append((ix, iy, iw, ih))
+    return results
 
 
 def generate_structures(city, block_dimensions):
@@ -194,60 +334,26 @@ def generate_structures(city, block_dimensions):
             continue
 
         generate_flooring(city, structure, tile_types.floor)
-        # generate_outer_walls(city, structure)
         generate_walls(city, structure)
 
-        rooms = subdivide_structure(structure)
-        for room in rooms:
-            generate_walls(city, room)
-            generate_outer_doors(city, room)
+        # rooms = subdivide_structure(structure)
+        # for room in rooms:
+        #     generate_walls(city, room)
+        #     generate_outer_doors(city, room)
 
-        # generate_windows(city, structure)
+        generate_windows(city, structure)
         generate_outer_doors(city, structure)
 
+        # TODO FIX
         chair_spot = random.choices(structure.along_inside_walls, k=12)
         for spot in chair_spot:
             if city.tiles[spot] in tile_types.EMPTY_TILES:
-                city.tiles[spot] = tile_types.chair_horiz
+                tile = random.choice(tile_types.BOOKCASE_TILES)
+                city.tiles[spot] = tile
 
         structures.append(structure)
 
     return structures
-
-
-def subdivide_structure(structure: RectangularStructure) -> list[RectangularRoom]:
-    aspect_ratio = structure.width / structure.height
-
-    # Adjust grid based on shape
-    if aspect_ratio > 1.5:
-        # Very wide
-        cols = random.randint(3, 4)
-        rows = random.randint(1, 2)
-    elif aspect_ratio < 0.67:
-        # Very tall
-        cols = random.randint(1, 2)
-        rows = random.randint(3, 4)
-    else:
-        # More balanced
-        cols = random.randint(2, 3)
-        rows = random.randint(2, 3)
-
-    room_width = structure.width // cols
-    room_height = structure.height // rows
-
-    rooms = []
-    for r in range(rows):
-        for c in range(cols):
-            x = structure.x1 + c * room_width
-            y = structure.y1 + r * room_height
-
-            # Possibly vary room size slightly (last row/col gets remainder)
-            w = room_width if c < cols - 1 else structure.x1 + structure.width - x
-            h = room_height if r < rows - 1 else structure.y1 + structure.height - y
-
-            rooms.append(RectangularRoom(x, y, w, h))
-
-    return rooms
 
 
 def generate_walls(city, structure: RectangularStructure, wall_type=None):
@@ -358,20 +464,6 @@ def generate_flooring(city, structure, floor_tile=tile_types.floor):
     city.tiles[structure.inner] = floor_tile
 
 
-# def generate_outer_walls(city, structure):
-#     # Walls
-#     for wall in structure.vertical_edges:
-#         city.tiles[wall] = tile_types.vertical_wall
-#     for wall in structure.horizontal_edges:
-#         city.tiles[wall] = tile_types.horizontal_wall
-
-#     # Corners
-#     city.tiles[structure.top_left_corner] = tile_types.top_left_corner_wall
-#     city.tiles[structure.bottom_left_corner] = tile_types.bottom_left_corner_wall
-#     city.tiles[structure.top_right_corner] = tile_types.top_right_corner_wall
-#     city.tiles[structure.bottom_right_corner] = tile_types.bottom_right_corner_wall
-
-
 def generate_windows(city, structure, number_of_windows=4):
     windows_each = max(0, number_of_windows // 2)
 
@@ -421,9 +513,9 @@ def generate_park():
 
 
 def generate_actors(city, player, structures, roads):
-    generate_player(city, player, structures)
     generate_npcs(city, structures, roads)
     generate_items(city, structures)
+    generate_player(city, player, structures)
 
 
 def generate_player(city, player, structures):
@@ -441,7 +533,7 @@ def generate_npcs(city, structures, roads):
         random_room = random.choice(structures)
         x, y = random.choice(slices_to_xys(*(random_room.inner)))
         if city.tiles[(x, y)] in tile_types.EMPTY_TILES:
-            entity_factory.troll.spawn(city, x, y)
+            entity_factory.orc.spawn(city, x, y)
             npcs_to_generate -= 1
 
 
@@ -459,3 +551,23 @@ def generate_items(city, structures):
             else:
                 entity_factory.fireball_scroll.spawn(city, x, y)
             items_to_place -= 1
+
+
+def place_tile(city, spot, tile_list, override=True):
+    tile = random.choice(tile_list)
+    if city.tiles[spot] in tile_types.EMPTY_TILES or override:
+        city.tiles[spot] = tile
+
+
+def place_tiles(city, spots, tile_list, override=True):
+    locations = []
+    if isinstance(spots, (List, list)):
+        locations = spots
+    elif isinstance(spots, Tuple):
+        locations = slices_to_xys(*spots)
+    else:
+        print(f"error placing tile from: {type(spots)}:")
+        print(spots)
+
+    for spot in locations:
+        place_tile(city, spot, tile_list, override)
