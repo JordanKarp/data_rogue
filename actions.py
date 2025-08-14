@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import dialog
 import color
 import exceptions
 
-
+import random
 from typing import Optional, Tuple, TYPE_CHECKING
 
 
@@ -164,37 +165,21 @@ class SpeakAction(ActionWithDirection):
             # No entity to attack.
             raise exceptions.Impossible("Nothing to speak to.")
 
-        self.engine.message_log.add_message("You're trying to speak!", color.white)
-
-        # damage = self.entity.fighter.power - target.fighter.defense
-
-        # attack_desc = f"{self.entity.name.capitalize()} attacks {target.name}"
-
-        # if self.entity is self.engine.player:
-        #     attack_color = color.player_atk
-        # else:
-        #     attack_color = color.enemy_atk
-
-        # if damage > 0:
-        #     self.engine.message_log.add_message(
-        #         f"{attack_desc} for {damage} hit points.", attack_color
-        #     )
-        #     target.fighter.hp -= damage
-        # else:
-        #     self.engine.message_log.add_message(
-        #         f"{attack_desc} but does no damage.", attack_color
-        #     )
+        msg = random.choice(dialog.GREETINGS)
+        msg = f"{target.name}: {msg}"
+        self.engine.message_log.add_message(
+            msg.format(player_name=self.entity.name), color.white
+        )
 
 
 class BumpAction(ActionWithDirection):
     def perform(self) -> None:
 
-        if self.target_actor:
-            if self.target_actor.name == "NPC":
-                return SpeakAction(self.entity, self.dx, self.dy).perform()
-            return MeleeAction(self.entity, self.dx, self.dy).perform()
-        else:
+        if not self.target_actor:
             return MovementAction(self.entity, self.dx, self.dy).perform()
+        if self.target_actor.name == "NPC":
+            return SpeakAction(self.entity, self.dx, self.dy).perform()
+        return MeleeAction(self.entity, self.dx, self.dy).perform()
 
 
 class WaitAction(Action):
@@ -214,3 +199,18 @@ class LeaveMapAction(Action):
             raise exceptions.Impossible("There is no exit here.")
         self.engine.game_world.generate_new_map()
         self.engine.message_log.add_message("You leave this city.", color.white)
+
+
+class TakeStairsAction(Action):
+    def perform(self) -> None:
+        """
+        Take stairs up or down, if any possible at the entity's location.
+        """
+        # if (
+        #     self.entity.x,
+        #     self.entity.y,
+        # ) not in self.engine.game_map.exit_locations:
+        #     raise exceptions.Impossible("There is no exit here.")
+        # self.engine.game_world.generate_new_map()
+
+        self.engine.message_log.add_message("You would take these stairs.", color.white)

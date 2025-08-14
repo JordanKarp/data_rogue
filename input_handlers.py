@@ -274,7 +274,7 @@ class LevelUpEventHandler(AskUserEventHandler):
 
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
         key = event.sym
-        index = key - tcod.event.K_a
+        index = key - tcod.event.KeySym.a
 
         if 0 <= index <= 2:
             player = self.engine.player
@@ -407,7 +407,6 @@ class SelectIndexHandler(AskUserEventHandler):
             return self.on_index_selected(wx, wy)
         return super().ev_keydown(event)
 
-    # TODO Rename this here and in `ev_keydown`
     def move_cursor(self, event, key):
         modifier = 1  # Holding modifier keys will speed up key movement.
         if event.mod & (tcod.event.Modifier.LSHIFT | tcod.event.Modifier.RSHIFT):

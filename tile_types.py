@@ -1,6 +1,5 @@
 from typing import Tuple
 
-import ultracolors as c
 import color
 import numpy as np  # type: ignore
 
@@ -44,23 +43,80 @@ tree = new_tile(
     dark=(ord("↨"), (0, 65, 0), color.dark_soil),
     light=(ord("↨"), (0, 205, 0), color.soil),
 )
+tree_2 = new_tile(
+    walkable=False,
+    transparent=True,
+    dark=(ord("▬"), (0, 65, 0), color.dark_soil),
+    light=(ord("▬"), (0, 205, 0), color.soil),
+)
 green_tree = new_tile(
     walkable=False,
     transparent=True,
     dark=(ord("↨"), (0, 65, 0), color.dark_soil),
     light=(ord("↨"), (0, 155, 0), color.soil),
 )
+green_tree_2 = new_tile(
+    walkable=False,
+    transparent=True,
+    dark=(ord("▬"), (0, 65, 0), color.dark_soil),
+    light=(ord("▬"), (0, 155, 0), color.soil),
+)
 dark_green_tree = new_tile(
     walkable=False,
     transparent=True,
-    dark=(ord("↨"), (0, 55, 0), color.dark_soil),
-    light=(ord("↨"), (0, 85, 0), color.soil),
+    dark=(ord("↨"), (0, 65, 0), color.dark_soil),
+    light=(ord("↨"), (0, 105, 0), color.soil),
 )
+dark_green_tree_2 = new_tile(
+    walkable=False,
+    transparent=True,
+    dark=(ord("▬"), (0, 65, 0), color.dark_soil),
+    light=(ord("▬"), (0, 105, 0), color.soil),
+)
+grass = new_tile(
+    walkable=True,
+    transparent=True,
+    dark=(ord(" "), (0, 175, 0), (0, 175, 0)),
+    light=(ord(" "), (0, 205, 0), (0, 205, 0)),
+)
+green_grass = new_tile(
+    walkable=True,
+    transparent=True,
+    dark=(ord(" "), (0, 125, 0), (0, 125, 0)),
+    light=(ord(" "), (0, 155, 0), (0, 155, 0)),
+)
+dark_green_grass = new_tile(
+    walkable=True,
+    transparent=True,
+    dark=(ord(" "), (0, 65, 0), (0, 65, 0)),
+    light=(ord(" "), (0, 105, 0), (0, 105, 0)),
+)
+
+
 chair_horiz = new_tile(
     walkable=True,
     transparent=True,
     dark=(ord("¥"), (225, 225, 225), (100, 100, 100)),
     light=(ord("¥"), (255, 255, 255), (130, 130, 130)),
+)
+table = new_tile(
+    walkable=False,
+    transparent=True,
+    dark=(ord("₧"), (87, 66, 66), (100, 100, 100)),
+    light=(ord("₧"), (117, 96, 96), (130, 130, 130)),
+)
+
+up_stairs = new_tile(
+    walkable=True,
+    transparent=True,
+    dark=(ord("▲"), (255, 255, 255), (100, 100, 100)),
+    light=(ord("▲"), (255, 255, 255), (130, 130, 130)),
+)
+down_stairs = new_tile(
+    walkable=False,
+    transparent=True,
+    dark=(ord("▼"), (255, 255, 255), (100, 100, 100)),
+    light=(ord("▼"), (255, 255, 255), (130, 130, 130)),
 )
 
 
@@ -112,6 +168,12 @@ floor = new_tile(
     transparent=True,
     dark=(ord(" "), (225, 225, 225), (100, 100, 100)),
     light=(ord(" "), (255, 255, 255), (130, 130, 130)),
+)
+reserved_floor = new_tile(
+    walkable=True,
+    transparent=True,
+    dark=(ord(" "), (225, 225, 225), (70, 69, 70)),
+    light=(ord(" "), (255, 255, 255), (100, 100, 100)),
 )
 wall = new_tile(
     walkable=False,
@@ -223,7 +285,20 @@ bookcase_empty = new_tile(
 
 BOOKCASE_TILES = [bookcase_empty, bookcase_full]
 
-TREE_TILES = [tree, green_tree, dark_green_tree]
+TREE_TILES = [
+    tree,
+    green_tree,
+    dark_green_tree,
+    tree_2,
+    green_tree_2,
+    dark_green_tree_2,
+]
+
+GRASS_TILES = [
+    # grass,
+    green_grass,
+    # dark_green_grass,
+]
 
 EMPTY_TILES = [cement, floor, None]
 

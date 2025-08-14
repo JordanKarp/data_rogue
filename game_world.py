@@ -1,7 +1,7 @@
 from engine import Engine
 from game_map import GameMap
 
-from city_gen import generate_city
+from city_gen import generate_city, CITY_DEFAULTS
 
 
 class GameWorld:
@@ -18,7 +18,7 @@ class GameWorld:
         self.map_index = -1
         self.maps = {}
 
-    def generate_new_map(self, city_details=None) -> None:
+    def generate_new_map(self, city_details=CITY_DEFAULTS) -> None:
         if city_details is None:
             city_details = {}
         self.map_index += 1

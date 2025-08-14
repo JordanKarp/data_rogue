@@ -39,11 +39,6 @@ def new_game() -> Engine:
     )
     engine = Engine(player=player, camera=camera)
 
-    # engine.game_map = new_generate_city(
-    #     map_width=map_width,
-    #     map_height=map_height,
-    #     engine=engine,
-    # )
     engine.game_world = GameWorld(engine=engine)
     engine.game_world.generate_new_map()
     engine.update_fov()

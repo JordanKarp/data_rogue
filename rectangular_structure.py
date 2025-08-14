@@ -40,6 +40,11 @@ class RectangularStructure:
         return center_x, center_y
 
     @property
+    def area(self) -> Tuple[slice, slice]:
+        """Return the inner area of this room as a 2D array index."""
+        return slice(self.x1, self.x2 + 1), slice(self.y1, self.y2 + 1)
+
+    @property
     def inner(self) -> Tuple[slice, slice]:
         """Return the inner area of this room as a 2D array index."""
         return slice(self.x1 + 1, self.x2), slice(self.y1 + 1, self.y2)

@@ -10,11 +10,21 @@ import entity_factory
 from utility import slices_to_xys
 
 CITY_DEFAULTS = {
-    "MAP_WIDTH": 80,
-    "MAP_HEIGHT": 43,
+    "MAP_WIDTH": 160,
+    "MAP_HEIGHT": 86,
     "MIN_BLOCK_SIZE": 10,
-    "TREE_BORDER_WIDTH": 6,
+    "TREE_BORDER_WIDTH": 3,
     "ROAD_WIDTH": 3,
+    "REQUIRED_STRUCTURES": [
+        "MDU",
+        "Library",
+    ],
+    "FILLER_STRUCTURES": [
+        "Park",
+        "Lobby",
+        "Office",
+        "Conference Room",
+    ],
 }
 
 
@@ -24,32 +34,40 @@ def generate_city(
     map_height=CITY_DEFAULTS["MAP_HEIGHT"],
     city_details=CITY_DEFAULTS,
 ):
+    # Init
     player = engine.player
     city = GameMap(engine, map_width, map_height, entities=[player])
 
-    # generate_tree_border(city=city, border_width=CITY_DEFAULTS["TREE_BORDER_WIDTH"])
-    border_width = CITY_DEFAULTS["TREE_BORDER_WIDTH"]
+    # Tree Border
+    border_width = city_details["TREE_BORDER_WIDTH"]
     generate_tree_border(city=city, border_width=border_width)
+
+    # Section off city into roads and blocks
     blocks, road_spots = divide_cityspace(
-        city, border_width, CITY_DEFAULTS["MIN_BLOCK_SIZE"]
+        city, border_width, city_details["MIN_BLOCK_SIZE"]
     )
+
+    # Draw roads, including exit
     road_spots = generate_city_out_road(city, road_spots, border_width)
     roads = generate_roads(city, road_spots)
-    structures = generate_structures(city, blocks)
-    for structure in structures:
-        rooms, doors = split_and_place_doors(structure)
-        for room in rooms:
-            generate_walls(city, room)
-        place_tiles(city, doors, [tile_types.door])
-        # for door in doors:
-        #     city.tiles[door] = tile_types.door
-        generate_outer_doors(city, structure)
+
+    # Draw buildings
+    structures = blocks_to_structures(blocks)
+    structures_and_types = generate_structure_types(structures, city_details)
+
+    for structure, structure_type in structures_and_types.items():
+        generate_structure_details(city, structure, structure_type)
+
+    # Generate Actors and Items
     generate_actors(city, player, structures, roads)
-    player.place(20, 20, city)
+
+    # Generate Player
+    generate_player(city, player)
 
     return city
 
 
+# CREATE GRID
 def split_rectangle(rect: RectangularStructure, min_size=3, split_chance=0.6):
     """
     Split a rectangle into rooms of various sizes.
@@ -148,6 +166,7 @@ def split_and_place_doors(rect: RectangularStructure, min_size=4):
     return rooms, doors
 
 
+# GENERATE BORDER
 def generate_tree_border(city, border_width):
     rows = city.height
     cols = city.width
@@ -246,6 +265,7 @@ def divide_cityspace(city, border_width, min_block_size):
     return [b.as_tuple for b in blocks], [r.as_tuple for r in roads]
 
 
+# ROADS
 def generate_roads(city, road_dimensions):
     # Determine road sizes and number
     roads = []
@@ -322,38 +342,138 @@ def rect_touch_or_overlap(rects: List[Tuple[int, int, int, int]]):
     return results
 
 
-def generate_structures(city, block_dimensions):
-    # Determine lot sizes and type
-    structures = []
+def generate_structure_details(city, structure, structure_type):
+    # TODO add more structures
+    # TODO add structure division
+    # TODO add new super structure type
 
-    for x, y, w, h in block_dimensions:
-        # determine size
-        structure = RectangularRoom(x, y, w, h)
-
-        if any(structure.intersects(other_structure) for other_structure in structures):
-            continue
-
+    if structure_type in ["Park"]:
+        generate_park(city, structure)
+    else:
         generate_flooring(city, structure, tile_types.floor)
         generate_walls(city, structure)
-
-        # rooms = subdivide_structure(structure)
-        # for room in rooms:
-        #     generate_walls(city, room)
-        #     generate_outer_doors(city, room)
-
+        # TODO section out windows into subsections with custom # of windows
         generate_windows(city, structure)
-        generate_outer_doors(city, structure)
+        generate_doors(city, structure)
 
-        # TODO FIX
-        chair_spot = random.choices(structure.along_inside_walls, k=12)
-        for spot in chair_spot:
-            if city.tiles[spot] in tile_types.EMPTY_TILES:
-                tile = random.choice(tile_types.BOOKCASE_TILES)
-                city.tiles[spot] = tile
+    if structure_type == "Office":
+        generate_office(city, structure)
 
-        structures.append(structure)
+    elif structure_type == "Conference Room":
+        generate_conference_room(city, structure)
 
+    elif structure_type == "Library":
+        generate_library(city, structure)
+
+    elif structure_type == "Lobby":
+        # TODO add multiple floors and fix
+        generate_lobby(city, structure)
+
+
+def blocks_to_structures(block_dimensions):
+    structures = []
+    structures.extend(RectangularRoom(x, y, w, h) for x, y, w, h in block_dimensions)
     return structures
+
+
+def generate_structure_types(structures, details):
+    required_types = details["REQUIRED_STRUCTURES"]
+    filler_types = details["FILLER_STRUCTURES"]
+
+    random.shuffle(structures)  # shuffle to randomize assignment
+
+    structures_and_types = dict(zip(structures, required_types))
+    # Step 2: Assign random types to remaining structures
+    remaining_structures = structures[len(required_types) :]
+    for structure in remaining_structures:
+        structures_and_types[structure] = random.choice(filler_types)
+
+    return structures_and_types
+
+
+def generate_office(city, structure):
+    size = len(slices_to_xys(*structure.inner))
+    bookshelf_spots = random.choices(structure.along_inside_walls, k=max(1, size // 3))
+    x, y = structure.center
+    place_tiles(city, bookshelf_spots, tile_types.BOOKCASE_TILES, False)
+    place_tiles(city, [(x, y)], [tile_types.table], True)
+    place_tiles(city, [(x, y - 1)], [tile_types.chair_horiz], True)
+
+
+def generate_lobby(city, structure, floors=1):
+    for floor in range(1, floors + 1):
+        if floor == 1:
+            generate_lobby_up(city, structure)
+        elif floor == floors:
+            generate_lobby_down(city, structure)
+        else:
+            generate_lobby_up_down(city, structure, floor % 2 == 0)
+
+
+def generate_lobby_up(city, structure):
+    x, y = structure.center
+    place_tile(city, (x - 1, y), [tile_types.up_stairs], True)
+
+
+def generate_lobby_down(city, structure, flip):
+    x, y = structure.center
+    spot = (x + 1, y) if flip else (x - 1, y)
+    place_tile(city, spot, [tile_types.down_stairs], True)
+
+
+def generate_lobby_up_down(city, structure, flip=True):
+    x, y = structure.center
+    if flip:
+        up = (x + 1, y)
+        down = (x - 1, y)
+    else:
+        up = (x - 1, y)
+        down = (x + 1, y)
+    place_tile(city, up, [tile_types.up_stairs], True)
+    place_tile(city, down, [tile_types.down_stairs], True)
+
+
+def generate_library(city, structure):
+    inner = slices_to_xys(*structure.inner)
+    ys = [y for x, y in inner]
+    min_y, max_y = min(ys), max(ys)
+    bookshelf_spots = [
+        s for s in inner if s[0] % 2 == 0 and s[1] != min_y and s[1] != max_y
+    ]
+    place_tiles(city, bookshelf_spots, tile_types.BOOKCASE_TILES, False)
+
+
+def generate_conference_room(city, structure):
+    size = len(slices_to_xys(*structure.inner))
+    room = structure
+    if structure.width >= 9 and structure.height >= 9:
+        room = RectangularRoom(
+            structure.x + 2,
+            structure.y + 2,
+            structure.width - 4,
+            structure.height - 4,
+        )
+        bookshelf_spots = random.choices(
+            structure.along_inside_walls, k=max(1, size // 3)
+        )
+        place_tiles(city, bookshelf_spots, tile_types.BOOKCASE_TILES, False)
+    elif structure.width >= 7 and structure.height >= 7:
+        room = RectangularRoom(
+            structure.x + 1,
+            structure.y + 1,
+            structure.width - 2,
+            structure.height - 2,
+        )
+    xs = [x for x, y in room.along_inside_walls]
+    ys = [y for x, y in room.along_inside_walls]
+    min_x, max_x = min(xs), max(xs)
+    min_y, max_y = min(ys), max(ys)
+
+    corners = {(min_x, min_y), (min_x, max_y), (max_x, min_y), (max_x, max_y)}
+
+    along_wo_corners = [spot for spot in room.along_inside_walls if spot not in corners]
+    place_tiles(city, along_wo_corners, [tile_types.chair_horiz])
+    place_tiles(city, room.inner_away_from_walls, [tile_types.table])
 
 
 def generate_walls(city, structure: RectangularStructure, wall_type=None):
@@ -450,16 +570,6 @@ def generate_walls(city, structure: RectangularStructure, wall_type=None):
             city.tiles[spot] = tile_types.wall
 
 
-# def generate_inner_walls(city, structure, room):
-#     for spot in room.edges_and_corners:
-#         if spot in structure.edges_and_corners:
-#             continue
-#         if spot in room.vertical_edges:
-#             city.tiles[spot] = tile_types.vertical_wall
-#         elif spot in room.horizontal_edges:
-#             city.tiles[spot] = tile_types.horizontal_wall
-
-
 def generate_flooring(city, structure, floor_tile=tile_types.floor):
     city.tiles[structure.inner] = floor_tile
 
@@ -480,12 +590,26 @@ def generate_windows(city, structure, number_of_windows=4):
                 city.tiles[spot] = tile_types.vertical_window
 
 
-def generate_outer_doors(city, structure):
+def generate_doors(city, structure):
     while True:
-        door_spot = random.choice(structure.edges)
-        if city.tiles[door_spot] in tile_types.FLAT_WALL_TILES:
-            city.tiles[door_spot] = tile_types.door
+        (x, y) = random.choice(structure.edges)
+        if place_doors_and_reserve_floor(city, x, y):
             return
+
+
+def place_doors_and_reserve_floor(city, x, y):
+    if city.tiles[(x, y)] == tile_types.vertical_wall:
+        place_tile(city, (x, y), [tile_types.door], True)
+        place_tile(city, (x - 1, y), [tile_types.reserved_floor], True)
+        place_tile(city, (x + 1, y), [tile_types.reserved_floor], True)
+
+        return True
+    elif city.tiles[(x, y)] == tile_types.horizontal_wall:
+        place_tile(city, (x, y), [tile_types.door], True)
+        place_tile(city, (x, y - 1), [tile_types.reserved_floor], True)
+        place_tile(city, (x, y + 1), [tile_types.reserved_floor], True)
+        return True
+    return False
 
 
 def generate_living_room():
@@ -500,31 +624,25 @@ def generate_bathroom():
     pass
 
 
-def generate_office():
-    pass
-
-
 def generate_retail():
     pass
 
 
-def generate_park():
-    pass
+def generate_park(city, structure):
+    place_tiles(city, structure.area, tile_types.GRASS_TILES)
+    spots = random.choices(slices_to_xys(*structure.area), k=3)
+    place_tiles(city, spots, tile_types.TREE_TILES)
 
 
 def generate_actors(city, player, structures, roads):
     generate_npcs(city, structures, roads)
     generate_items(city, structures)
-    generate_player(city, player, structures)
 
 
-def generate_player(city, player, structures):
-    while True:
-        random_room = random.choice(structures)
-        spot = random.choice(slices_to_xys(*(random_room.inner)))
-        if city.tiles[spot] not in tile_types.WALL_TILES:
-            player.place(*spot, city)
-            return
+def generate_player(city, player):
+    if city.exit_locations:
+        spot = random.choice(city.exit_locations)
+        player.place(*spot, city)
 
 
 def generate_npcs(city, structures, roads):
@@ -533,7 +651,8 @@ def generate_npcs(city, structures, roads):
         random_room = random.choice(structures)
         x, y = random.choice(slices_to_xys(*(random_room.inner)))
         if city.tiles[(x, y)] in tile_types.EMPTY_TILES:
-            entity_factory.orc.spawn(city, x, y)
+            # entity_factory.orc.spawn(city, x, y)
+            entity_factory.npc.spawn(city, x, y)
             npcs_to_generate -= 1
 
 
@@ -564,7 +683,10 @@ def place_tiles(city, spots, tile_list, override=True):
     if isinstance(spots, (List, list)):
         locations = spots
     elif isinstance(spots, Tuple):
-        locations = slices_to_xys(*spots)
+        if isinstance(spots[0], slice) and isinstance(spots[1], slice):
+            locations = slices_to_xys(*spots)
+        else:
+            locations = [spots]
     else:
         print(f"error placing tile from: {type(spots)}:")
         print(spots)

@@ -23,6 +23,8 @@ class GameMap:
         self.tiles = np.full((width, height), fill_value=tile_types.cement, order="F")
         self.camera = self.engine.camera
         self.exit_locations = []
+        self.stair_locations = []
+        self.current_level = 1
 
         # Tiles the player can currently see
         self.visible = np.full((width, height), fill_value=False, order="F")
@@ -49,18 +51,19 @@ class GameMap:
     def get_blocking_entity_at_location(
         self, loc_x: int, loc_y: int
     ) -> Optional[Entity]:
-        for entity in self.entities:
-            if entity.blocks_movement and entity.x == loc_x and entity.y == loc_y:
-                return entity
-
-        return None
+        return next(
+            (
+                entity
+                for entity in self.entities
+                if entity.blocks_movement and entity.x == loc_x and entity.y == loc_y
+            ),
+            None,
+        )
 
     def get_actor_at_location(self, x: int, y: int) -> Optional[Actor]:
-        for actor in self.actors:
-            if actor.x == x and actor.y == y:
-                return actor
-
-        return None
+        return next(
+            (actor for actor in self.actors if actor.x == x and actor.y == y), None
+        )
 
     def in_bounds(self, x: int, y: int) -> bool:
         """Return True if x and y are inside of the bounds of this map."""
@@ -74,23 +77,6 @@ class GameMap:
         If it isn't, but it's in the "explored" array, then draw it with the "dark" colors.
         Otherwise, the default is "SHROUD".
         """
-
-        # vx, vy = self.camera.viewport()
-        # # print(self.visible.shape)
-        # # Slice world arrays in (x, y) order
-        # visible_slice = self.visible[vx, vy]
-        # explored_slice = self.explored[vx, vy]
-        # light_tiles = self.tiles["light"][vx, vy]
-        # dark_tiles = self.tiles["dark"][vx, vy]
-        # # print(vy, visible_slice.shape)
-
-        # console.rgb[0 : self.camera.screen_width, 0 : self.camera.screen_height] = (
-        #     np.select(
-        #         condlist=[visible_slice, explored_slice],
-        #         choicelist=[light_tiles, dark_tiles],
-        #         default=tile_types.SHROUD,
-        #     )
-        # )
 
         vx, vy = self.camera.viewport()
 

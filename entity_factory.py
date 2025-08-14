@@ -28,7 +28,7 @@ orc = Actor(
 )
 
 npc = Actor(
-    char="☺",
+    char="σ",
     color=(230, 230, 100),
     name="NPC",
     ai_cls=ai.WandererAI,
