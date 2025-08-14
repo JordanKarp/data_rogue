@@ -31,3 +31,6 @@ menu_text = c.WHITE
 
 soil = c.VERY_DARK_BROWN
 dark_soil = (72, 44, 31)
+
+wall = (109, 85, 55)
+dark_wall = (79, 55, 25)

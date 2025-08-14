@@ -184,103 +184,103 @@ wall = new_tile(
 vertical_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("║"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("║"), (30, 30, 30), (100, 100, 100)),
+    dark=(ord("║"), color.dark_wall, (70, 70, 70)),
+    light=(ord("║"), color.wall, (100, 100, 100)),
 )
 vertical_window = new_tile(
     walkable=False,
     transparent=True,
-    dark=(ord("│"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("│"), (30, 30, 30), (100, 100, 100)),
+    dark=(ord("│"), color.dark_wall, (70, 70, 70)),
+    light=(ord("│"), color.wall, (100, 100, 100)),
 )
 
 horizontal_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("═"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("═"), (30, 30, 30), (100, 100, 100)),
+    dark=(ord("═"), color.dark_wall, (70, 70, 70)),
+    light=(ord("═"), color.wall, (100, 100, 100)),
 )
 horizontal_window = new_tile(
     walkable=False,
     transparent=True,
-    dark=(ord("─"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("─"), (30, 30, 30), (100, 100, 100)),
+    dark=(ord("─"), color.dark_wall, (70, 70, 70)),
+    light=(ord("─"), color.wall, (100, 100, 100)),
 )
 
 cross_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("╬"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("╬"), (30, 30, 30), (100, 100, 100)),
+    dark=(ord("╬"), color.dark_wall, (70, 70, 70)),
+    light=(ord("╬"), color.wall, (100, 100, 100)),
 )
 left_t_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("╣"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("╣"), (30, 30, 30), (100, 100, 100)),
+    dark=(ord("╣"), color.dark_wall, (70, 70, 70)),
+    light=(ord("╣"), color.wall, (100, 100, 100)),
 )
 right_t_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("╠"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("╠"), (30, 30, 30), (100, 100, 100)),
+    dark=(ord("╠"), color.dark_wall, (70, 70, 70)),
+    light=(ord("╠"), color.wall, (100, 100, 100)),
 )
 up_t_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("╩"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("╩"), (30, 30, 30), (100, 100, 100)),
+    dark=(ord("╩"), color.dark_wall, (70, 70, 70)),
+    light=(ord("╩"), color.wall, (100, 100, 100)),
 )
 down_t_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("╦"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("╦"), (30, 30, 30), (100, 100, 100)),
+    dark=(ord("╦"), color.dark_wall, (70, 70, 70)),
+    light=(ord("╦"), color.wall, (100, 100, 100)),
 )
 top_left_corner_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("╔"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("╔"), (30, 30, 30), (100, 100, 100)),
+    dark=(ord("╔"), color.dark_wall, (70, 70, 70)),
+    light=(ord("╔"), color.wall, (100, 100, 100)),
 )
 bottom_left_corner_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("╚"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("╚"), (30, 30, 30), (100, 100, 100)),
+    dark=(ord("╚"), color.dark_wall, (70, 70, 70)),
+    light=(ord("╚"), color.wall, (100, 100, 100)),
 )
 top_right_corner_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("╗"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("╗"), (30, 30, 30), (100, 100, 100)),
+    dark=(ord("╗"), color.dark_wall, (70, 70, 70)),
+    light=(ord("╗"), color.wall, (100, 100, 100)),
 )
 bottom_right_corner_wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("╝"), (0, 0, 0), (70, 70, 70)),
-    light=(ord("╝"), (30, 30, 30), (100, 100, 100)),
+    dark=(ord("╝"), color.dark_wall, (70, 70, 70)),
+    light=(ord("╝"), color.wall, (100, 100, 100)),
 )
 
 
 door = new_tile(
     walkable=True,
     transparent=False,
-    dark=(ord("+"), (225, 225, 225), (70, 70, 70)),
-    light=(ord("+"), (255, 255, 255), (100, 100, 100)),
+    dark=(ord("+"), color.dark_wall, (70, 70, 70)),
+    light=(ord("+"), color.wall, (100, 100, 100)),
 )
 
 bookcase_full = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("π"), (225, 225, 225), (70, 70, 70)),
-    light=(ord("π"), (255, 255, 255), (100, 100, 100)),
+    dark=(ord("π"), color.wall, (70, 70, 70)),
+    light=(ord("π"), (139, 115, 85), (100, 100, 100)),
 )
 bookcase_empty = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord("Σ"), (225, 225, 225), (70, 70, 70)),
-    light=(ord("Σ"), (255, 255, 255), (100, 100, 100)),
+    dark=(ord("Σ"), color.wall, (70, 70, 70)),
+    light=(ord("Σ"), (139, 115, 85), (100, 100, 100)),
 )
 
 BOOKCASE_TILES = [bookcase_empty, bookcase_full]

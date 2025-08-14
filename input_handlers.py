@@ -13,6 +13,7 @@ from actions import (
     PickupAction,
     WaitAction,
     LeaveMapAction,
+    TakeStairsAction,
 )
 import color
 import exceptions
@@ -521,6 +522,8 @@ class MainGameEventHandler(EventHandler):
             return LookHandler(self.engine)
         elif key == tcod.event.KeySym.p:
             action = LeaveMapAction(player)
+        elif key == tcod.event.KeySym.o:
+            action = TakeStairsAction(player)
         elif key == tcod.event.KeySym.c:
             return CharacterScreenEventHandler(self.engine)
 

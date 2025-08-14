@@ -115,11 +115,12 @@ class ActionWithDirection(Action):
 class MovementAction(ActionWithDirection):
     def perform(self) -> None:
         dest_x, dest_y = self.dest_xy
+        floor = self.engine.game_map.current_level
 
         if not self.engine.game_map.in_bounds(dest_x, dest_y):
             # Destination is out of bounds.
             raise exceptions.Impossible("That way is blocked.")
-        if not self.engine.game_map.tiles["walkable"][dest_x, dest_y]:
+        if not self.engine.game_map.tiles[floor]["walkable"][dest_x, dest_y]:
             # Destination is blocked by a tile.
             raise exceptions.Impossible("That way is blocked.")
         if self.engine.game_map.get_blocking_entity_at_location(dest_x, dest_y):
@@ -206,11 +207,11 @@ class TakeStairsAction(Action):
         """
         Take stairs up or down, if any possible at the entity's location.
         """
-        # if (
-        #     self.entity.x,
-        #     self.entity.y,
-        # ) not in self.engine.game_map.exit_locations:
-        #     raise exceptions.Impossible("There is no exit here.")
-        # self.engine.game_world.generate_new_map()
-
-        self.engine.message_log.add_message("You would take these stairs.", color.white)
+        if (self.entity.x, self.entity.y) in self.engine.game_map.stair_locations["UP"]:
+            self.engine.game_map.current_level += 1
+        elif (self.entity.x, self.entity.y) in self.engine.game_map.stair_locations[
+            "DOWN"
+        ]:
+            self.engine.game_map.current_level -= 1
+        else:
+            raise exceptions.Impossible("There are no stairs here.")

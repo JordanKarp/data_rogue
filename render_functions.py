@@ -11,7 +11,10 @@ if TYPE_CHECKING:
 
 
 def get_names_at_location(x: int, y: int, game_map: GameMap) -> str:
-    if not game_map.in_bounds(x, y) or not game_map.visible[x, y]:
+    if (
+        not game_map.in_bounds(x, y)
+        or not game_map.visible[game_map.current_level][x, y]
+    ):
         return ""
 
     names = ", ".join(

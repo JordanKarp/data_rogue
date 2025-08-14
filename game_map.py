@@ -15,21 +15,34 @@ if TYPE_CHECKING:
 
 class GameMap:
     def __init__(
-        self, engine: Engine, width: int, height: int, entities: Iterable[Entity] = ()
+        self,
+        engine: Engine,
+        width: int,
+        height: int,
+        levels: int,
+        entities: Iterable[Entity] = (),
     ):
+
         self.engine = engine
         self.width, self.height = width, height
+        self.max_levels = levels
         self.entities = set(entities)
-        self.tiles = np.full((width, height), fill_value=tile_types.cement, order="F")
+        self.tiles = np.full(
+            (self.max_levels, width, height), fill_value=tile_types.cement, order="F"
+        )
         self.camera = self.engine.camera
         self.exit_locations = []
-        self.stair_locations = []
+        self.stair_locations = {"UP": [], "DOWN": []}
         self.current_level = 1
 
         # Tiles the player can currently see
-        self.visible = np.full((width, height), fill_value=False, order="F")
+        self.visible = np.full(
+            (self.max_levels, width, height), fill_value=False, order="F"
+        )
         # Tiles the player has seen before
-        self.explored = np.full((width, height), fill_value=False, order="F")
+        self.explored = np.full(
+            (self.max_levels, width, height), fill_value=False, order="F"
+        )
 
     @property
     def gamemap(self) -> GameMap:
@@ -79,6 +92,12 @@ class GameMap:
         """
 
         vx, vy = self.camera.viewport()
+        floor = self.current_level
+
+        # Current floor data
+        visible_map = self.visible[floor]
+        explored_map = self.explored[floor]
+        tiles_map = self.tiles[floor]
 
         # Clamp viewport to map bounds
         map_x1, map_x2 = vx.start, min(vx.stop, self.width)
@@ -92,21 +111,23 @@ class GameMap:
         render_output = np.full(
             (self.camera.screen_width, self.camera.screen_height),
             tile_types.SHROUD,
-            dtype=self.tiles["light"].dtype,
+            dtype=tiles_map["light"].dtype,
         )
 
-        # Fill only the valid map area
-        render_output[0:slice_w, 0:slice_h] = np.select(
+        # Visible area
+        visible_render = np.select(
             condlist=[
-                self.visible[map_x1:map_x2, map_y1:map_y2],
-                self.explored[map_x1:map_x2, map_y1:map_y2],
+                visible_map[map_x1:map_x2, map_y1:map_y2],
+                explored_map[map_x1:map_x2, map_y1:map_y2],
             ],
             choicelist=[
-                self.tiles["light"][map_x1:map_x2, map_y1:map_y2],
-                self.tiles["dark"][map_x1:map_x2, map_y1:map_y2],
+                tiles_map[map_x1:map_x2, map_y1:map_y2]["light"],  # light
+                tiles_map[map_x1:map_x2, map_y1:map_y2]["dark"],  # dark (placeholder)
             ],
             default=tile_types.SHROUD,
         )
+
+        render_output[0:slice_w, 0:slice_h] = visible_render
 
         # Assign to console
         console.rgb[0 : self.camera.screen_width, 0 : self.camera.screen_height] = (
@@ -120,8 +141,8 @@ class GameMap:
         for sx, sy, ent in self.camera.entities_to_screen(
             entities_sorted_for_rendering
         ):
-            if self.visible[ent.x, ent.y]:
-                background_color = tuple(self.tiles[(ent.x, ent.y)]["light"][2])
+            if visible_map[ent.x, ent.y]:
+                background_color = tuple(tiles_map[(ent.x, ent.y)]["light"][2])
                 console.print(
                     x=sx,
                     y=sy,
@@ -129,10 +150,54 @@ class GameMap:
                     fg=ent.color,
                     bg=background_color,
                 )
+        # vx, vy = self.camera.viewport()
 
-        # for entity in entities_sorted_for_rendering:
-        #     # Only print entities that are in the FOV
-        #     pos_x, pos_y = self.camera.world_to_screen(entity.x, entity.y)
-        #     if self.visible[e, pos_y] or entity.char == "J":
-        #         # if self.visible[entity.x, entity.y] or entity.char == "J":
-        #         console.print(x=pos_x, y=pos_y, string=entity.char, fg=entity.color)
+        # # Clamp viewport to map bounds
+        # map_x1, map_x2 = vx.start, min(vx.stop, self.width)
+        # map_y1, map_y2 = vy.start, min(vy.stop, self.height)
+
+        # # Actual visible size from map
+        # slice_w = map_x2 - map_x1
+        # slice_h = map_y2 - map_y1
+
+        # # Create a full SHROUD screen buffer
+        # render_output = np.full(
+        #     (self.camera.screen_width, self.camera.screen_height),
+        #     tile_types.SHROUD,
+        #     dtype=self.tiles["light"].dtype,
+        # )
+
+        # # Fill only the valid map area
+        # render_output[0:slice_w, 0:slice_h] = np.select(
+        #     condlist=[
+        #         self.visible[map_x1:map_x2, map_y1:map_y2],
+        #         self.explored[map_x1:map_x2, map_y1:map_y2],
+        #     ],
+        #     choicelist=[
+        #         self.tiles["light"][map_x1:map_x2, map_y1:map_y2],
+        #         self.tiles["dark"][map_x1:map_x2, map_y1:map_y2],
+        #     ],
+        #     default=tile_types.SHROUD,
+        # )
+
+        # # Assign to console
+        # console.rgb[0 : self.camera.screen_width, 0 : self.camera.screen_height] = (
+        #     render_output
+        # )
+
+        # entities_sorted_for_rendering = sorted(
+        #     self.entities, key=lambda x: x.render_order.value
+        # )
+
+        # for sx, sy, ent in self.camera.entities_to_screen(
+        #     entities_sorted_for_rendering
+        # ):
+        #     if self.visible[ent.x, ent.y]:
+        #         background_color = tuple(self.tiles[(ent.x, ent.y)]["light"][2])
+        #         console.print(
+        #             x=sx,
+        #             y=sy,
+        #             string=ent.char,
+        #             fg=ent.color,
+        #             bg=background_color,
+        #         )
