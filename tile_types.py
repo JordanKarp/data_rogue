@@ -37,6 +37,18 @@ def new_tile(
 SHROUD = np.array((ord(" "), (255, 255, 255), (20, 20, 20)), dtype=graphic_dt)
 
 
+underground = new_tile(
+    walkable=False,
+    transparent=False,
+    dark=(ord(" "), color.black, color.black),
+    light=(ord(" "), color.black, color.black),
+)
+sky = new_tile(
+    walkable=False,
+    transparent=True,
+    dark=(ord(" "), color.white, color.white),
+    light=(ord(" "), color.white, color.white),
+)
 tree = new_tile(
     walkable=False,
     transparent=True,
@@ -113,10 +125,16 @@ up_stairs = new_tile(
     light=(ord("▲"), (255, 255, 255), (130, 130, 130)),
 )
 down_stairs = new_tile(
-    walkable=False,
+    walkable=True,
     transparent=True,
     dark=(ord("▼"), (255, 255, 255), (100, 100, 100)),
     light=(ord("▼"), (255, 255, 255), (130, 130, 130)),
+)
+floor_num_1 = new_tile(
+    walkable=True,
+    transparent=True,
+    dark=(ord("1"), (255, 255, 255), (100, 100, 100)),
+    light=(ord("1"), (255, 255, 255), (130, 130, 130)),
 )
 
 

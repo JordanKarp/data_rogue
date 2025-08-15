@@ -207,11 +207,22 @@ class TakeStairsAction(Action):
         """
         Take stairs up or down, if any possible at the entity's location.
         """
-        if (self.entity.x, self.entity.y) in self.engine.game_map.stair_locations["UP"]:
+        if (
+            self.engine.game_map.current_level,
+            (self.entity.x, self.entity.y),
+        ) in self.engine.game_map.stair_locations["UP"]:
             self.engine.game_map.current_level += 1
-        elif (self.entity.x, self.entity.y) in self.engine.game_map.stair_locations[
-            "DOWN"
-        ]:
+        elif (
+            self.engine.game_map.current_level,
+            (self.entity.x, self.entity.y),
+        ) in self.engine.game_map.stair_locations["DOWN"]:
             self.engine.game_map.current_level -= 1
         else:
             raise exceptions.Impossible("There are no stairs here.")
+
+        if (
+            self.engine.game_map.current_level < 0
+            or self.engine.game_map.current_level > self.engine.game_map.max_levels
+        ):
+            raise exceptions.Impossible("You've gone out of bounds")
+            self.engine.game_map.current_level = 1

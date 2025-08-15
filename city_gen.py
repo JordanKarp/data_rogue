@@ -35,10 +35,12 @@ def generate_city(
 ):
     # Init
     player = engine.player
-    map_width = CITY_DEFAULTS["MAP_WIDTH"]
-    map_height = CITY_DEFAULTS["MAP_HEIGHT"]
-    levels = CITY_DEFAULTS["MAX_LEVELS"]
+    map_width = city_details["MAP_WIDTH"]
+    map_height = city_details["MAP_HEIGHT"]
+    levels = city_details["MAX_LEVELS"]
     city = GameMap(engine, map_width, map_height, levels, entities=[player])
+
+    generate_ground_and_sky(city, levels)
 
     # Tree Border
     border_width = city_details["TREE_BORDER_WIDTH"]
@@ -67,6 +69,16 @@ def generate_city(
     generate_player(city, player)
 
     return city
+
+
+def generate_ground_and_sky(city, levels):
+    rows = city.height
+    cols = city.width
+    map_struct = RectangularRoom(0, 0, cols - 1, rows - 1)
+    place_tiles(city, 0, map_struct.area, [tile_types.underground])
+    if levels >= 2:
+        for level in range(2, levels):
+            place_tiles(city, level, map_struct.area, [tile_types.sky])
 
 
 # CREATE GRID
@@ -285,8 +297,6 @@ def generate_roads(city, road_dimensions):
 
         place_tiles(city, level, road.center_line, [divider_tile])
         place_tiles(city, level, road.lanes, [tile_types.road])
-        # city.tiles[road.center_line] = divider_tile
-        # city.tiles[road.lanes] = tile_types.road
 
         for other_road in roads:
             if road.abuts(other_road):
@@ -354,14 +364,11 @@ def generate_structure_details(city, structure, structure_type):
     if structure_type in ["Park"]:
         generate_park(city, structure)
     else:
-        generate_flooring(city, 1, structure, tile_types.floor)
-        generate_walls(city, 1, structure)
-        # TODO section out windows into subsections with custom # of windows
-        generate_windows(city, 1, structure)
-        generate_doors(city, 1, structure)
+        generate_building(city, structure, 0, 5)
 
     if structure_type == "Office":
         generate_office(city, 1, structure)
+        generate_stairwell(city, structure)
 
     elif structure_type == "Conference Room":
         generate_conference_room(city, 1, structure)
@@ -370,8 +377,57 @@ def generate_structure_details(city, structure, structure_type):
         generate_library(city, 1, structure)
 
     elif structure_type == "Lobby":
-        # TODO add multiple floors and fix
-        generate_lobby(city, 1, structure)
+
+        generate_stairwell(city, structure)
+
+    elif structure_type == "Single Floor Stairwell":
+        generate_stairwell(city, structure, 1, 2)
+    elif structure_type == "Double Floor Stairwell":
+        generate_stairwell(city, structure, 1, 2)
+    elif structure_type == "Full Stairwell":
+        generate_stairwell(city, structure)
+    elif structure_type == "Cellar Door Stairwell":
+        generate_stairwell(city, structure, 0, 1)
+
+
+def generate_building(
+    city, structure, bottom_floor=0, top_floor=CITY_DEFAULTS["MAX_LEVELS"]
+):
+    for floor in range(bottom_floor, top_floor):
+        generate_flooring(city, floor, structure, tile_types.floor)
+        generate_walls(city, floor, structure)
+        if floor != 0:
+            generate_windows(city, floor, structure)
+        if floor == 1:
+            generate_doors(city, floor, structure)
+
+
+def generate_stairwell(
+    city, structure, bottom_floor=0, top_floor=CITY_DEFAULTS["MAX_LEVELS"]
+):
+    x, y = structure.center
+    for floor in range(bottom_floor, top_floor):
+        # generate_flooring(city, floor, structure)
+        # generate_walls(city, floor, structure)
+
+        if floor % 2 == 0:
+            down_spot = (x - 1, y)
+            up_spot = (x + 1, y)
+        else:
+            down_spot = (x + 1, y)
+            up_spot = (x - 1, y)
+
+        if floor == bottom_floor:
+            place_tile(city, floor, up_spot, [tile_types.up_stairs], True)
+            city.stair_locations["UP"].append((floor, up_spot))
+        elif floor == top_floor - 1:
+            place_tile(city, floor, down_spot, [tile_types.down_stairs], True)
+            city.stair_locations["DOWN"].append((floor, down_spot))
+        else:
+            place_tile(city, floor, up_spot, [tile_types.up_stairs], True)
+            place_tile(city, floor, down_spot, [tile_types.down_stairs], True)
+            city.stair_locations["UP"].append((floor, up_spot))
+            city.stair_locations["DOWN"].append((floor, down_spot))
 
 
 def blocks_to_structures(block_dimensions):
@@ -402,45 +458,6 @@ def generate_office(city, level, structure):
     place_tiles(city, level, bookshelf_spots, tile_types.BOOKCASE_TILES, False)
     place_tiles(city, level, [(x, y)], [tile_types.table], True)
     place_tiles(city, level, [(x, y - 1)], [tile_types.chair_horiz], True)
-
-
-# TODO FIX
-def generate_lobby(city, level, structure, floors=1):
-    for floor in range(1, floors + 1):
-        if floor == 1:
-            generate_lobby_up(city, level, structure)
-        elif floor == floors:
-            generate_lobby_down(city, level, structure)
-        else:
-            generate_lobby_up_down(city, level, structure, floor % 2 == 0)
-
-
-def generate_lobby_up(city, level, structure):
-    x, y = structure.center
-    spot = (x - 1, y)
-    place_tile(city, level, spot, [tile_types.up_stairs], True)
-    city.stair_locations["UP"].append(spot)
-
-
-def generate_lobby_down(city, level, structure, flip):
-    x, y = structure.center
-    spot = (x + 1, y) if flip else (x - 1, y)
-    place_tile(city, level, spot, [tile_types.down_stairs], True)
-    city.stair_locations["DOWN"].append(spot)
-
-
-def generate_lobby_up_down(city, level, structure, flip=True):
-    x, y = structure.center
-    if flip:
-        up = (x + 1, y)
-        down = (x - 1, y)
-    else:
-        up = (x - 1, y)
-        down = (x + 1, y)
-    place_tile(city, level, up, [tile_types.up_stairs], True)
-    place_tile(city, level, down, [tile_types.down_stairs], True)
-    city.stair_locations["UP"].append(up)
-    city.stair_locations["DOWN"].append(down)
 
 
 def generate_library(city, level, structure):
@@ -581,7 +598,7 @@ def generate_walls(city, level, structure: RectangularStructure, wall_type=None)
 
 
 def generate_flooring(city, level, structure, floor_tile=tile_types.floor):
-    city.tiles[level][structure.inner] = floor_tile
+    place_tiles(city, level, structure.inner, [floor_tile])
 
 
 def generate_windows(city, level, structure, number_of_windows=4):
@@ -678,8 +695,10 @@ def generate_items(city, structures):
             val = random.random()
             if val <= 0.2:
                 entity_factory.lightning_scroll.spawn(city, x, y)
-            if val <= 0.5:
+            elif val <= 0.5:
                 entity_factory.confusion_scroll.spawn(city, x, y)
+            elif val <= 0.7:
+                entity_factory.health_potion.spawn(city, x, y)
             else:
                 entity_factory.fireball_scroll.spawn(city, x, y)
             items_to_place -= 1
