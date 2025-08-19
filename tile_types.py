@@ -88,8 +88,8 @@ dark_green_tree_2 = new_tile(
 grass = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord(" "), (0, 175, 0), (0, 175, 0)),
-    light=(ord(" "), (0, 205, 0), (0, 205, 0)),
+    dark=(ord(" "), (0, 135, 0), (0, 135, 0)),
+    light=(ord(" "), (0, 165, 0), (0, 165, 0)),
 )
 green_grass = new_tile(
     walkable=True,
@@ -100,8 +100,8 @@ green_grass = new_tile(
 dark_green_grass = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord(" "), (0, 65, 0), (0, 65, 0)),
-    light=(ord(" "), (0, 105, 0), (0, 105, 0)),
+    dark=(ord(" "), (0, 115, 0), (0, 115, 0)),
+    light=(ord(" "), (0, 145, 0), (0, 145, 0)),
 )
 
 
@@ -121,14 +121,14 @@ table = new_tile(
 up_stairs = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord("▲"), (255, 255, 255), (100, 100, 100)),
-    light=(ord("▲"), (255, 255, 255), (130, 130, 130)),
+    dark=(ord("τ"), (255, 255, 255), (100, 100, 100)),
+    light=(ord("τ"), (255, 255, 255), (130, 130, 130)),
 )
 down_stairs = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord("▼"), (255, 255, 255), (100, 100, 100)),
-    light=(ord("▼"), (255, 255, 255), (130, 130, 130)),
+    dark=(ord("Φ"), (255, 255, 255), (100, 100, 100)),
+    light=(ord("Φ"), (255, 255, 255), (130, 130, 130)),
 )
 floor_num_1 = new_tile(
     walkable=True,
@@ -313,9 +313,9 @@ TREE_TILES = [
 ]
 
 GRASS_TILES = [
-    # grass,
+    grass,
     green_grass,
-    # dark_green_grass,
+    dark_green_grass,
 ]
 
 EMPTY_TILES = [cement, floor, None]

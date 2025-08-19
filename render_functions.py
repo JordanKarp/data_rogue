@@ -24,6 +24,20 @@ def get_names_at_location(x: int, y: int, game_map: GameMap) -> str:
     return names.capitalize()
 
 
+def render_hline(
+    console,
+    x,
+    y,
+    width,
+    text="─",
+):
+    console.print(
+        x,
+        y,
+        string=text * width,
+    )
+
+
 # def render_bar(
 #     console: Console, current_value: int, maximum_value: int, total_width: int
 # ) -> None:

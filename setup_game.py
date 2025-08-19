@@ -24,8 +24,8 @@ from city_gen import generate_city
 def new_game() -> Engine:
     """Return a brand new game session as an Engine instance."""
 
-    map_screen_width = 80
-    map_screen_height = 43
+    map_screen_width = 50
+    map_screen_height = 50
 
     map_width = 200
     map_height = 200
@@ -100,7 +100,9 @@ class MainMenu(input_handlers.BaseEventHandler):
             raise SystemExit()
         elif event.sym == tcod.event.KeySym.c:
             try:
-                return input_handlers.MainGameEventHandler(load_game("savegame.sav"))
+                return input_handlers.MainGameEventHandler(
+                    load_game("save_data/savegame.sav")
+                )
             except FileNotFoundError:
                 return input_handlers.PopupMessage(self, "No saved game to load.")
             except Exception as exc:

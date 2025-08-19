@@ -14,7 +14,7 @@ from camera import Camera
 from input_handlers import MainGameEventHandler
 from game_clock import GameClock
 from message_log import MessageLog
-from render_functions import render_bar, render_names_at_mouse_location
+from render_functions import render_bar, render_names_at_mouse_location, render_hline
 import exceptions
 
 if TYPE_CHECKING:
@@ -76,28 +76,36 @@ class Engine:
         self.game_map.render(console)
 
         console.print(
-            x=1,
-            y=48,
+            x=51,
+            y=1,
             string=f"{self.clock.time.strftime('%b %d - %H:%M %p')}",
         )
         console.print(
-            x=1, y=46, string=f"Level: {self.player.experience.current_level}"
+            x=51, y=2, string=f"Level: {self.player.experience.current_level}"
         )
         console.print(
-            x=1,
-            y=44,
+            x=51,
+            y=3,
             string=f"X: {self.player.x:3d}     Y: {self.player.y:3d}",
         )
 
-        self.message_log.render(console=console, x=21, y=45, width=40, height=5)
+        render_hline(
+            console=console,
+            x=50,
+            y=29,
+            width=30,
+            text="─",
+        )
+
+        self.message_log.render(console=console, x=51, y=30, width=28, height=20)
 
         render_bar(
             console=console,
             current_value=self.player.fighter.hp,
             maximum_value=self.player.fighter.max_hp,
-            total_width=20,
-            x=0,
-            y=45,
+            total_width=28,
+            x=51,
+            y=4,
             display_text="HP: ",
             bar_color=color.red,
         )
@@ -105,14 +113,22 @@ class Engine:
             console=console,
             current_value=self.player.experience.current_xp,
             maximum_value=self.player.experience.experience_to_next_level,
-            total_width=20,
-            x=0,
-            y=47,
-            display_text=f" XP: ",
+            total_width=28,
+            x=51,
+            y=5,
+            display_text=" XP: ",
             bar_color=color.blue,
         )
 
-        render_names_at_mouse_location(console=console, x=21, y=44, engine=self)
+        render_names_at_mouse_location(console=console, x=51, y=6, engine=self)
+
+        render_hline(
+            console=console,
+            x=50,
+            y=7,
+            width=30,
+            text="─",
+        )
 
     def save_as(self, filename: str) -> None:
         """Save this Engine instance as a compressed file."""

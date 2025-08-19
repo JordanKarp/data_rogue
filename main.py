@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import tcod
 import traceback
+from pathlib import Path
 
 
 import color
@@ -9,19 +10,23 @@ import exceptions
 import setup_game
 
 
+FONTS_FOLDER = Path("fonts")
+SAVE_FOLDER = Path("save_data")
+
+
 def save_game(handler: input_handlers.BaseEventHandler, filename: str) -> None:
     """If the current event handler has an active Engine then save it."""
     if isinstance(handler, input_handlers.EventHandler):
-        handler.engine.save_as(filename)
+        handler.engine.save_as(SAVE_FOLDER / filename)
         print("Game saved.")
 
 
 def main() -> None:
-    terminal_width = 320
-    terminal_height = 200
+    terminal_width = 80
+    terminal_height = 50
 
     tileset = tcod.tileset.load_tilesheet(
-        "JK_Fnord_16x16.png",
+        FONTS_FOLDER / "JK_Fnord_16x16.png",
         16,
         16,
         tcod.tileset.CHARMAP_CP437,
@@ -36,9 +41,7 @@ def main() -> None:
         title="Data Rogue",
         vsync=True,
     ) as context:
-        root_console = tcod.console.Console(
-            terminal_width // 4, terminal_height // 4, order="F"
-        )
+        root_console = tcod.console.Console(terminal_width, terminal_height, order="F")
 
         try:
             while True:

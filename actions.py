@@ -118,8 +118,13 @@ class MovementAction(ActionWithDirection):
         floor = self.engine.game_map.current_level
 
         if not self.engine.game_map.in_bounds(dest_x, dest_y):
-            # Destination is out of bounds.
-            raise exceptions.Impossible("That way is blocked.")
+            if (
+                self.entity.x,
+                self.entity.y,
+            ) not in self.engine.game_map.exit_locations:
+                # Destination is out of bounds.
+                raise exceptions.Impossible("That way is blocked.")
+            return LeaveMapAction(self.entity).perform()
         if not self.engine.game_map.tiles[floor]["walkable"][dest_x, dest_y]:
             # Destination is blocked by a tile.
             raise exceptions.Impossible("That way is blocked.")

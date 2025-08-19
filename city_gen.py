@@ -309,6 +309,7 @@ def generate_roads(city, road_dimensions):
 
 
 def generate_city_out_road(city, roads, border_width):
+    """Extends one road at random so the player can exit the map"""
     w = city.width - (2 * border_width)
     h = city.height - (2 * border_width)
 
@@ -377,8 +378,11 @@ def generate_structure_details(city, structure, structure_type):
         generate_library(city, 1, structure)
 
     elif structure_type == "Lobby":
+        # for tile in structure.area:
+        #     if city.tiles[1][tile] == tile_types.reserved_floor:
+        #         if
 
-        generate_stairwell(city, structure)
+        generate_stairwell(city, structure, horiz_spot=False)
 
     elif structure_type == "Single Floor Stairwell":
         generate_stairwell(city, structure, 1, 2)
@@ -403,19 +407,25 @@ def generate_building(
 
 
 def generate_stairwell(
-    city, structure, bottom_floor=0, top_floor=CITY_DEFAULTS["MAX_LEVELS"]
+    city,
+    structure,
+    bottom_floor=0,
+    top_floor=CITY_DEFAULTS["MAX_LEVELS"],
+    center_spot=None,
+    horiz_spot=True,
 ):
-    x, y = structure.center
+    x, y = center_spot or structure.center
+    x_add, y_add = (1, 0) if horiz_spot else (0, 1)
     for floor in range(bottom_floor, top_floor):
         # generate_flooring(city, floor, structure)
         # generate_walls(city, floor, structure)
 
         if floor % 2 == 0:
-            down_spot = (x - 1, y)
-            up_spot = (x + 1, y)
+            down_spot = (x - x_add, y - y_add)
+            up_spot = (x + x_add, y + y_add)
         else:
-            down_spot = (x + 1, y)
-            up_spot = (x - 1, y)
+            down_spot = (x + x_add, y + y_add)
+            up_spot = (x - x_add, y - y_add)
 
         if floor == bottom_floor:
             place_tile(city, floor, up_spot, [tile_types.up_stairs], True)
