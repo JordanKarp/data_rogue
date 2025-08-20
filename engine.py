@@ -129,6 +129,11 @@ class Engine:
             width=30,
             text="─",
         )
+        console.print(
+            x=51,
+            y=7,
+            string="Inventory",
+        )
 
     def save_as(self, filename: str) -> None:
         """Save this Engine instance as a compressed file."""

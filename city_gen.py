@@ -10,8 +10,8 @@ import entity_factory
 from utility import slices_to_xys
 
 CITY_DEFAULTS = {
-    "MAP_WIDTH": 160,
-    "MAP_HEIGHT": 86,
+    "MAP_WIDTH": 100,
+    "MAP_HEIGHT": 50,
     "MAX_LEVELS": 5,
     "MIN_BLOCK_SIZE": 10,
     "TREE_BORDER_WIDTH": 3,
@@ -678,9 +678,11 @@ def generate_actors(city, player, structures, roads):
 
 
 def generate_player(city, player):
-    if city.exit_locations:
-        spot = random.choice(city.exit_locations)
-        player.place(*spot, city)
+    # if city.exit_locations:
+    #     spot = random.choice(city.exit_locations)
+    #     player.place(*spot, city)
+
+    player.place(4, 4, city)
 
 
 def generate_npcs(city, structures, roads):
