@@ -18,17 +18,16 @@ from engine import Engine
 import entity_factory
 from game_world import GameWorld
 import input_handlers
-from city_gen import generate_city
 
 
 def new_game() -> Engine:
     """Return a brand new game session as an Engine instance."""
 
-    map_screen_width = 50
-    map_screen_height = 50
+    map_screen_width = 25
+    map_screen_height = 25
 
-    map_width = 200
-    map_height = 200
+    map_width = 100
+    map_height = 100
 
     player = copy.deepcopy(entity_factory.player)
     camera = Camera(
@@ -44,7 +43,7 @@ def new_game() -> Engine:
     engine.update_fov()
 
     engine.message_log.add_message(
-        "Hello and welcome, adventurer, to yet another dungeon!", color.welcome_text
+        "Hello and welcome to Data Rogue!", color.welcome_text
     )
     return engine
 

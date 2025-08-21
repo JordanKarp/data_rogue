@@ -79,11 +79,24 @@ class MessageLog:
         The `messages` are rendered starting at the last message and working
         backwards.
         """
-        y_offset = height - 1
-
-        for message in reversed(messages):
-            for line in reversed(list(cls.wrap(message.full_text, width))):
-                console.print(x=x, y=y + y_offset, string=line, fg=message.fg)
-                y_offset -= 1
-                if y_offset < 0:
+        # Messages Flow Downwards
+        y_offset = 1
+        for message in messages[-height // 2 :]:
+            for idx, line in enumerate(list(cls.wrap(message.full_text, width))):
+                indent = 0
+                if idx > 0:
+                    indent = 2
+                console.print(x=x + indent, y=y + y_offset, string=line, fg=message.fg)
+                y_offset += 1
+                if y_offset > height:
                     return  # No more space to print messages.
+
+        # # Messages Flow Upwards
+        # y_offset = height - 1
+
+        # for message in reversed(messages):
+        #     for line in reversed(list(cls.wrap(message.full_text, width))):
+        #         console.print(x=x, y=y + y_offset, string=line, fg=message.fg)
+        #         y_offset -= 1
+        #         if y_offset < 0:
+        #             return  # No more space to print messages.

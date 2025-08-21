@@ -178,9 +178,22 @@ class SpeakAction(ActionWithDirection):
         )
 
 
+class ReadAction(ActionWithDirection):
+    def perform(self) -> None:
+        # target = self.target_actor
+
+        # if not target:
+        #     # No entity to attack.
+        #     raise exceptions.Impossible("Nothing to speak to.")
+
+        # msg = random.choice(dialog.GREETINGS)
+        # msg = f"{target.name}: {msg}"
+        self.engine.message_log.add_message("Reading goes here", color.white)
+
+
 class BumpAction(ActionWithDirection):
     def perform(self) -> None:
-
+        # TODO
         if not self.target_actor:
             return MovementAction(self.entity, self.dx, self.dy).perform()
         if self.target_actor.name == "NPC":

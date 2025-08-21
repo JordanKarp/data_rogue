@@ -39,6 +39,20 @@ def new_tile(
 SHROUD = np.array((ord(" "), (255, 255, 255), (20, 20, 20)), dtype=graphic_dt)
 
 
+sink = new_tile(
+    walkable=False,
+    transparent=True,
+    dark=(ord("Θ"), color.white, color.dark_cement),
+    light=(ord("Θ"), color.white, color.cement),
+    name="sink",
+)
+underground = new_tile(
+    walkable=False,
+    transparent=False,
+    dark=(ord(" "), color.black, color.black),
+    light=(ord(" "), color.black, color.black),
+    name="underground",
+)
 underground = new_tile(
     walkable=False,
     transparent=False,
@@ -159,7 +173,7 @@ floor_num_1 = new_tile(
 road = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord(" "), (225, 225, 255), (40, 40, 40)),
+    dark=(ord(" "), (225, 225, 255), color.dark_asphalt),
     light=(ord(" "), (255, 255, 255), (70, 70, 70)),
     name="road",
 )
@@ -167,43 +181,43 @@ road = new_tile(
 road_divider_horiz = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord("═"), (225, 225, 0), (40, 40, 40)),
-    light=(ord("═"), (255, 255, 0), (70, 70, 70)),
+    dark=(ord("═"), (225, 225, 0), color.dark_asphalt),
+    light=(ord("═"), (255, 255, 0), color.asphalt),
     name="road",
 )
 road_divider_vert = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord("║"), (225, 225, 0), (40, 40, 40)),
-    light=(ord("║"), (255, 255, 0), (70, 70, 70)),
+    dark=(ord("║"), (225, 225, 0), color.dark_asphalt),
+    light=(ord("║"), (255, 255, 0), color.asphalt),
     name="road",
 )
 road_divider_intersection = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord("╬"), (225, 225, 0), (40, 40, 40)),
-    light=(ord("╬"), (255, 255, 0), (70, 70, 70)),
+    dark=(ord("╬"), (225, 225, 0), color.dark_asphalt),
+    light=(ord("╬"), (255, 255, 0), color.asphalt),
     name="road",
 )
 stop_line_vert = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord("▐"), (225, 225, 225), (40, 40, 40)),
-    light=(ord("▐"), (255, 255, 255), (70, 70, 70)),
+    dark=(ord("▐"), (225, 225, 225), color.dark_asphalt),
+    light=(ord("▐"), (255, 255, 255), color.asphalt),
     name="road",
 )
 stop_line_horiz = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord("_"), (255, 255, 255), (40, 40, 40)),
-    light=(ord("_"), (255, 255, 255), (70, 70, 70)),
+    dark=(ord("_"), (255, 255, 255), color.dark_asphalt),
+    light=(ord("_"), (255, 255, 255), color.asphalt),
     name="road",
 )
 cement = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord(" "), (225, 225, 225), (70, 70, 70)),
-    light=(ord(" "), (255, 255, 255), (100, 100, 100)),
+    dark=(ord(" "), (225, 225, 225), color.dark_cement),
+    light=(ord(" "), (255, 255, 255), color.cement),
     name="cement",
 )
 floor = new_tile(
@@ -216,8 +230,15 @@ floor = new_tile(
 reserved_floor = new_tile(
     walkable=True,
     transparent=True,
+    dark=(ord(" "), (225, 225, 225), (100, 99, 100)),
+    light=(ord(" "), (255, 255, 255), (130, 130, 130)),
+    name="floor",
+)
+reserved_cement = new_tile(
+    walkable=True,
+    transparent=True,
     dark=(ord(" "), (225, 225, 225), (70, 69, 70)),
-    light=(ord(" "), (255, 255, 255), (100, 100, 100)),
+    light=(ord(" "), (255, 255, 255), color.cement),
     name="floor",
 )
 wall = new_tile(

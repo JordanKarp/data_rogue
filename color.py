@@ -34,3 +34,9 @@ dark_soil = (72, 44, 31)
 
 wall = (109, 85, 55)
 dark_wall = (79, 55, 25)
+
+cement = (100, 100, 100)
+dark_cement = (70, 70, 70)
+
+asphalt = (70, 70, 70)
+dark_asphalt = (40, 40, 40)

@@ -30,6 +30,7 @@ class Entity:
         parent: Optional[GameMap] = None,
         x: int = 0,
         y: int = 0,
+        level: int = 1,
         char: str = "?",
         color: Tuple[int, int, int] = (255, 255, 255),
         name: str = "<Unnamed>",
@@ -38,6 +39,7 @@ class Entity:
     ):
         self.x = x
         self.y = y
+        self.level = level
         self.char = char
         self.color = color
         self.name = name
@@ -58,6 +60,7 @@ class Entity:
         clone = copy.deepcopy(self)
         clone.x = x
         clone.y = y
+        # clone.level = level
         clone.parent = gamemap
 
         gamemap.entities.add(clone)
@@ -72,6 +75,7 @@ class Entity:
         """Place this entity at a new location.  Handles moving across GameMaps."""
         self.x = x
         self.y = y
+        # self.level = level
         if gamemap:
             if hasattr(self, "parent"):  # Possibly uninitialized.
                 if self.parent is self.gamemap:
@@ -92,6 +96,7 @@ class Actor(Entity):
         *,
         x: int = 0,
         y: int = 0,
+        # level: int = 1,
         char: str = "?",
         color: Tuple[int, int, int] = (255, 255, 255),
         name: str = "<Unnamed>",
@@ -103,6 +108,7 @@ class Actor(Entity):
         super().__init__(
             x=x,
             y=y,
+            # level=level,
             char=char,
             color=color,
             name=name,
@@ -133,6 +139,7 @@ class Item(Entity):
         *,
         x: int = 0,
         y: int = 0,
+        # level: int = 1,
         char: str = "?",
         color: Tuple[int, int, int] = (255, 255, 255),
         name: str = "<Unnamed>",
@@ -141,6 +148,7 @@ class Item(Entity):
         super().__init__(
             x=x,
             y=y,
+            # level=level,
             char=char,
             color=color,
             name=name,

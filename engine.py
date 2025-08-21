@@ -24,6 +24,12 @@ if TYPE_CHECKING:
     from game_world import GameWorld
 
 
+X_POS = 25
+Y_POS = 3
+
+DISPLAYS = ["Character", "Inventory", "Dialog", "Notes", "History"]
+
+
 class Engine:
     game_map: GameMap
     game_world: GameWorld
@@ -36,6 +42,7 @@ class Engine:
         self.message_log = MessageLog()
         self.clock = GameClock()
         self.camera = camera
+        self.active_hud_index = 0
 
     def handle_enemy_turns(self) -> None:
         for entity in set(self.game_map.actors) - {self.player}:
@@ -55,12 +62,6 @@ class Engine:
             radius=10,
             algorithm=FOV_BASIC,
         )
-        # self.game_map.visible[:] = compute_fov(
-        #     self.game_map.tiles["transparent"],
-        #     (self.player.x, self.player.y),
-        #     radius=10,
-        #     algorithm=FOV_BASIC,
-        # )
         # If a tile is "visible" it should be added to "explored".
         self.game_map.explored |= self.game_map.visible
 
@@ -70,70 +71,83 @@ class Engine:
     def update_gameclock(self) -> None:
         self.clock.increment()
 
+    def change_hud(self, hud_index=None):
+        if hud_index:
+            self.active_hud_index = hud_index
+            return
+        self.active_hud_index = (self.active_hud_index + 1) % len(DISPLAYS)
+
     def render(self, console: Console) -> None:
         self.update_camera()
-
         self.game_map.render(console)
 
+        # self.message_log.render(console=console, x=X_POS + 1, y=20, width=24, height=1)
+        render_names_at_mouse_location(console, X_POS + 1, y=1, engine=self)
+
+        render_hline(console, X_POS, Y_POS, 30)
+        console.print(x=X_POS + 1, y=Y_POS, string=DISPLAYS[self.active_hud_index])
+
+        if DISPLAYS[self.active_hud_index] == "Character":
+            self.render_character_details(console)
+        elif DISPLAYS[self.active_hud_index] == "Inventory":
+            self.render_inventory(console)
+        elif DISPLAYS[self.active_hud_index] == "Dialog":
+            self.render_dialog(console)
+        elif DISPLAYS[self.active_hud_index] == "Notes":
+            self.render_notes(console)
+        elif DISPLAYS[self.active_hud_index] == "History":
+            self.message_log.render(
+                console=console, x=X_POS, y=Y_POS + 1, width=25, height=20
+            )
+        else:
+            print("render error")
+
+    def render_character_details(self, console):
         console.print(
-            x=51,
-            y=1,
-            string=f"{self.clock.time.strftime('%b %d - %H:%M %p')}",
-        )
-        console.print(
-            x=51, y=2, string=f"Level: {self.player.experience.current_level}"
-        )
-        console.print(
-            x=51,
-            y=3,
-            string=f"X: {self.player.x:3d}     Y: {self.player.y:3d}",
-        )
-
-        render_hline(
-            console=console,
-            x=50,
-            y=29,
-            width=30,
-            text="─",
-        )
-
-        self.message_log.render(console=console, x=51, y=30, width=28, height=20)
-
-        render_bar(
-            console=console,
-            current_value=self.player.fighter.hp,
-            maximum_value=self.player.fighter.max_hp,
-            total_width=28,
-            x=51,
-            y=4,
-            display_text="HP: ",
-            bar_color=color.red,
-        )
-        render_bar(
-            console=console,
-            current_value=self.player.experience.current_xp,
-            maximum_value=self.player.experience.experience_to_next_level,
-            total_width=28,
-            x=51,
-            y=5,
-            display_text=" XP: ",
-            bar_color=color.blue,
-        )
-
-        render_names_at_mouse_location(console=console, x=51, y=6, engine=self)
-
-        render_hline(
-            console=console,
-            x=50,
-            y=7,
-            width=30,
-            text="─",
+            x=X_POS,
+            y=Y_POS + 1,
+            string=f"X:{self.player.x} Y:{self.player.y}",
         )
         console.print(
-            x=51,
-            y=7,
-            string="Inventory",
+            x=X_POS,
+            y=Y_POS + 2,
+            string=f"Level: {self.player.experience.current_level}",
         )
+        console.print(
+            x=X_POS,
+            y=Y_POS + 3,
+            string=f"XP: {self.player.experience.current_xp}",
+        )
+        console.print(
+            x=X_POS,
+            y=Y_POS + 4,
+            string=f"XP for next Level: {self.player.experience.experience_to_next_level}",
+        )
+
+        console.print(
+            x=X_POS,
+            y=Y_POS + 5,
+            string=f"Attack: {self.player.fighter.power}",
+        )
+        console.print(
+            x=X_POS,
+            y=Y_POS + 6,
+            string=f"Defense: {self.player.fighter.defense}",
+        )
+
+    def render_inventory(self, console):
+        if len(self.player.inventory.items) > 0:
+            for i, item in enumerate(self.player.inventory.items):
+                item_key = chr(ord("a") + i)
+                console.print(X_POS + 1, 1 + i + 1, f"({item_key}) {item.name}")
+        else:
+            console.print(X_POS + 1, 3, " (Empty) ")
+
+    def render_dialog(self, console):
+        pass
+
+    def render_notes(self, console):
+        pass
 
     def save_as(self, filename: str) -> None:
         """Save this Engine instance as a compressed file."""

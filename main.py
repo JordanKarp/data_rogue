@@ -22,7 +22,7 @@ def save_game(handler: input_handlers.BaseEventHandler, filename: str) -> None:
 
 
 def main() -> None:
-    terminal_width = 80
+    terminal_width = 100
     terminal_height = 50
 
     tileset = tcod.tileset.load_tilesheet(
@@ -40,8 +40,15 @@ def main() -> None:
         tileset=tileset,
         title="Data Rogue",
         vsync=True,
+        sdl_window_flags=tcod.context.SDL_WINDOW_RESIZABLE,
     ) as context:
-        root_console = tcod.console.Console(terminal_width, terminal_height, order="F")
+
+        root_console = context.new_console(
+            min_columns=terminal_width // 2,
+            min_rows=terminal_height // 2,
+            magnification=2.0,  # 2x tile size
+            order="F",
+        )
 
         try:
             while True:

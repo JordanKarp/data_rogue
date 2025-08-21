@@ -15,6 +15,8 @@ from actions import (
     LeaveMapAction,
     TakeStairsAction,
 )
+import keys
+
 import color
 import exceptions
 
@@ -167,14 +169,7 @@ class AskUserEventHandler(EventHandler):
 
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
         """By default any key exits this input handler."""
-        if event.sym in {  # Ignore modifier keys.
-            tcod.event.KeySym.LSHIFT,
-            tcod.event.KeySym.RSHIFT,
-            tcod.event.KeySym.LCTRL,
-            tcod.event.KeySym.RCTRL,
-            tcod.event.KeySym.LALT,
-            tcod.event.KeySym.RALT,
-        }:
+        if event.sym in keys.MODIFIER_KEYS:
             return None
         return self.on_exit()
 
@@ -500,6 +495,7 @@ class AreaRangedAttackHandler(SelectIndexHandler):
 class MainGameEventHandler(EventHandler):
 
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
+        # TODO Fix keys so one key can pickup items, take stairs, leave level, etc.
         action: Optional[Action] = None
 
         key = event.sym
@@ -526,6 +522,8 @@ class MainGameEventHandler(EventHandler):
             action = TakeStairsAction(player)
         elif key == tcod.event.KeySym.c:
             return CharacterScreenEventHandler(self.engine)
+        elif key == tcod.event.KeySym.q:
+            return self.engine.change_hud()
 
         elif key == tcod.event.KeySym.ESCAPE:
             raise SystemExit()

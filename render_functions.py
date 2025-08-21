@@ -10,29 +10,28 @@ if TYPE_CHECKING:
     from game_map import GameMap
 
 
-def get_names_at_location(x: int, y: int, game_map: GameMap) -> str:
+def get_entities_at_location(x: int, y: int, game_map: GameMap) -> str:
     if (
         not game_map.in_bounds(x, y)
         or not game_map.visible[game_map.current_level][x, y]
     ):
         return ""
+    return [entity for entity in game_map.entities if entity.x == x and entity.y == y]
 
-    names = ", ".join(
-        entity.name for entity in game_map.entities if entity.x == x and entity.y == y
-    )
 
+def entitys_to_name_list(entities):
+    names = ", ".join(entity.name for entity in entities)
     return names.capitalize()
 
 
 def get_tile_at_location(x: int, y: int, game_map: GameMap) -> str:
     if (
         not game_map.in_bounds(x, y)
-        or not game_map.visible[game_map.current_level][x, y]
+        or not game_map.explored[game_map.current_level][x, y]
     ):
         return ""
 
-    tile = game_map.tiles[game_map.current_level][x, y]
-    return tile["name"].capitalize()
+    return game_map.tiles[game_map.current_level][x, y]
 
 
 def render_hline(console, x, y, width, text="─"):
@@ -65,16 +64,29 @@ def render_bar(
 
 def render_names_at_mouse_location(
     console: Console, x: int, y: int, engine: Engine
-) -> None:
+) -> None:  # sourcery skip: extract-method
+    # ! FIX renders tiles under mouse when mouse is in non map section
     mouse_x, mouse_y = engine.mouse_location
+    # print(mouse_x, mouse_y, engine.game_map.in_bounds(mouse_x, mouse_y))
     # print(mouse_x, mouse_y)
-    names_at_mouse_location = get_names_at_location(
-        x=mouse_x, y=mouse_y, game_map=engine.game_map
-    )
-    if len(names_at_mouse_location) > 1:
-        console.print(x=x, y=y, string=names_at_mouse_location)
+    world_x, world_y = engine.camera.screen_to_world(mouse_x, mouse_y)
+    entities = get_entities_at_location(x=world_x, y=world_y, game_map=engine.game_map)
+    tile = get_tile_at_location(world_x, world_y, engine.game_map)
 
-    else:
+    if len(entities) >= 1:
+        console.print(x=x + 1, y=y, string=entitys_to_name_list(entities))
         console.print(
-            x=x, y=y, string=get_tile_at_location(mouse_x, mouse_y, engine.game_map)
+            x=x - 1,
+            y=y,
+            string=entities[0].char,
+            fg=entities[0].color,
+            bg=tuple(tile["light"][2]),
         )
+
+    elif tile := get_tile_at_location(world_x, world_y, engine.game_map):
+        name = tile["name"].capitalize()
+        char = chr(tile["light"][0].item())
+        fg_color = tuple(tile["light"][1])
+        bg_color = tuple(tile["light"][2])
+        console.print(x=x + 1, y=y, string=name)
+        console.print(x=x - 1, y=y, string=char, fg=fg_color, bg=bg_color)

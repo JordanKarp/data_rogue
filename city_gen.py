@@ -10,7 +10,7 @@ import entity_factory
 from utility import slices_to_xys
 
 CITY_DEFAULTS = {
-    "MAP_WIDTH": 100,
+    "MAP_WIDTH": 50,
     "MAP_HEIGHT": 50,
     "MAX_LEVELS": 5,
     "MIN_BLOCK_SIZE": 10,
@@ -21,10 +21,11 @@ CITY_DEFAULTS = {
         "Library",
     ],
     "FILLER_STRUCTURES": [
-        "Park",
-        "Lobby",
-        "Office",
-        "Conference Room",
+        # "Park",
+        "Bathroom"
+        # "Lobby",
+        # "Office",
+        # "Conference Room",
     ],
 }
 
@@ -363,7 +364,8 @@ def generate_structure_details(city, structure, structure_type):
     # TODO add new super structure type
 
     if structure_type in ["Park"]:
-        generate_park(city, structure)
+        num_trees = 6
+        generate_park(city, structure, num_trees)
     else:
         generate_building(city, structure, 0, 5)
 
@@ -373,6 +375,9 @@ def generate_structure_details(city, structure, structure_type):
 
     elif structure_type == "Conference Room":
         generate_conference_room(city, 1, structure)
+
+    elif structure_type == "Bathroom":
+        generate_bathroom(city, 1, structure)
 
     elif structure_type == "Library":
         generate_library(city, 1, structure)
@@ -630,21 +635,32 @@ def generate_windows(city, level, structure, number_of_windows=4):
 def generate_doors(city, level, structure):
     while True:
         (x, y) = random.choice(structure.edges)
-        if place_doors_and_reserve_floor(city, level, x, y):
+        if place_doors_and_reserve_floor(city, level, structure, x, y):
             return
 
 
-def place_doors_and_reserve_floor(city, level, x, y):
+def place_doors_and_reserve_floor(city, level, structure, x, y):
     if city.tiles[level][(x, y)] == tile_types.vertical_wall:
         place_tile(city, level, (x, y), [tile_types.door], True)
-        place_tile(city, level, (x - 1, y), [tile_types.reserved_floor], True)
-        place_tile(city, level, (x + 1, y), [tile_types.reserved_floor], True)
-
+        if structure.is_inside(x - 1, y):
+            left_tile = [tile_types.reserved_floor]
+            right_tile = [tile_types.reserved_cement]
+        else:
+            left_tile = [tile_types.reserved_cement]
+            right_tile = [tile_types.reserved_floor]
+        place_tile(city, level, (x - 1, y), left_tile, True)
+        place_tile(city, level, (x + 1, y), right_tile, True)
         return True
     elif city.tiles[level][(x, y)] == tile_types.horizontal_wall:
         place_tile(city, level, (x, y), [tile_types.door], True)
-        place_tile(city, level, (x, y - 1), [tile_types.reserved_floor], True)
-        place_tile(city, level, (x, y + 1), [tile_types.reserved_floor], True)
+        if structure.is_inside(x, y - 1):
+            up_tile = [tile_types.reserved_floor]
+            down_tile = [tile_types.reserved_cement]
+        else:
+            up_tile = [tile_types.reserved_cement]
+            down_tile = [tile_types.reserved_floor]
+        place_tile(city, level, (x, y - 1), up_tile, True)
+        place_tile(city, level, (x, y + 1), down_tile, True)
         return True
     return False
 
@@ -657,18 +673,19 @@ def generate_kitchen():
     pass
 
 
-def generate_bathroom():
-    pass
+def generate_bathroom(city, level, structure):
+    spot = random.choice(structure.along_inside_walls)
+    place_tile(city, level, spot, [tile_types.sink], False)
 
 
 def generate_retail():
     pass
 
 
-def generate_park(city, structure):
+def generate_park(city, structure, num_trees=5):
     level = 1
     place_tiles(city, level, structure.area, tile_types.GRASS_TILES)
-    spots = random.choices(slices_to_xys(*structure.area), k=3)
+    spots = random.choices(slices_to_xys(*structure.area), k=num_trees)
     place_tiles(city, level, spots, tile_types.TREE_TILES)
 
 
@@ -678,11 +695,12 @@ def generate_actors(city, player, structures, roads):
 
 
 def generate_player(city, player):
+    # ! FIX messes with alignment
     # if city.exit_locations:
     #     spot = random.choice(city.exit_locations)
     #     player.place(*spot, city)
 
-    player.place(4, 4, city)
+    player.place(3, 3, city)
 
 
 def generate_npcs(city, structures, roads):
@@ -692,12 +710,14 @@ def generate_npcs(city, structures, roads):
         random_room = random.choice(structures)
         x, y = random.choice(slices_to_xys(*(random_room.inner)))
         if city.tiles[level][(x, y)] in tile_types.EMPTY_TILES:
-            # entity_factory.orc.spawn(city, x, y)
+            # entity_factory.orc.spawn(city,  x, y)
             entity_factory.npc.spawn(city, x, y)
             npcs_to_generate -= 1
 
 
 def generate_items(city, structures):
+    # TODO improve around item generation
+    # TODO fix level / item generation
     level = 1
     items_to_place = len(structures)
     while items_to_place:
@@ -717,6 +737,7 @@ def generate_items(city, structures):
 
 
 def place_tile(city, level, spot, tile_list, override=True):
+    # TODO improve to handle reseved tiles?
     tile = random.choice(tile_list)
     if city.tiles[level][spot] in tile_types.EMPTY_TILES or override:
         city.tiles[level][spot] = tile
