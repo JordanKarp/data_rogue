@@ -90,7 +90,6 @@ class GameMap:
         If it isn't, but it's in the "explored" array, then draw it with the "dark" colors.
         Otherwise, the default is "SHROUD".
         """
-
         vx, vy = self.camera.viewport()
         floor = self.current_level
 
@@ -141,7 +140,7 @@ class GameMap:
         for sx, sy, ent in self.camera.entities_to_screen(
             entities_sorted_for_rendering
         ):
-            if visible_map[ent.x, ent.y]:
+            if visible_map[ent.x, ent.y] and ent.level == self.current_level:
                 background_color = tuple(tiles_map[(ent.x, ent.y)]["light"][2])
                 console.print(
                     x=sx,

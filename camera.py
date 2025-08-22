@@ -49,6 +49,7 @@ class Camera:
         result = []
         for e in entities:
             sx, sy = self.world_to_screen(e.x, e.y)
+
             if 0 <= sx < self.screen_width and 0 <= sy < self.screen_height:
                 result.append((sx, sy, e))
         return result

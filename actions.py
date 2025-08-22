@@ -78,7 +78,8 @@ class ItemAction(Action):
 
     def perform(self) -> None:
         """Invoke the items ability, this action will be given to provide context."""
-        self.item.consumable.activate(self)
+        if self.item.consumable:
+            self.item.consumable.activate(self)
 
 
 class DropItem(ItemAction):
@@ -230,11 +231,14 @@ class TakeStairsAction(Action):
             (self.entity.x, self.entity.y),
         ) in self.engine.game_map.stair_locations["UP"]:
             self.engine.game_map.current_level += 1
+            self.entity.level += 1
         elif (
             self.engine.game_map.current_level,
             (self.entity.x, self.entity.y),
         ) in self.engine.game_map.stair_locations["DOWN"]:
             self.engine.game_map.current_level -= 1
+            self.entity.level -= 1
+
         else:
             raise exceptions.Impossible("There are no stairs here.")
 
@@ -242,5 +246,6 @@ class TakeStairsAction(Action):
             self.engine.game_map.current_level < 0
             or self.engine.game_map.current_level > self.engine.game_map.max_levels
         ):
-            raise exceptions.Impossible("You've gone out of bounds")
             self.engine.game_map.current_level = 1
+            self.entity.level = 1
+            raise exceptions.Impossible("You've gone out of bounds")

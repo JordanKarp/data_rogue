@@ -138,10 +138,11 @@ class Engine:
     def render_inventory(self, console):
         if len(self.player.inventory.items) > 0:
             for i, item in enumerate(self.player.inventory.items):
-                item_key = chr(ord("a") + i)
-                console.print(X_POS + 1, 1 + i + 1, f"({item_key}) {item.name}")
+                # item_key = chr(ord("a") + i)
+                # console.print(X_POS + 1, Y_POS + i + 1, f"({item_key}) {item.name}")
+                console.print(X_POS + 1, Y_POS + i + 1, item.name)
         else:
-            console.print(X_POS + 1, 3, " (Empty) ")
+            console.print(X_POS + 1, Y_POS + 2, " (Empty) ")
 
     def render_dialog(self, console):
         pass

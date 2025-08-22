@@ -21,11 +21,11 @@ CITY_DEFAULTS = {
         "Library",
     ],
     "FILLER_STRUCTURES": [
-        # "Park",
-        "Bathroom"
-        # "Lobby",
-        # "Office",
-        # "Conference Room",
+        "Park",
+        "Bathroom",
+        "Lobby",
+        "Office",
+        "Conference Room",
     ],
 }
 
@@ -700,39 +700,41 @@ def generate_player(city, player):
     #     spot = random.choice(city.exit_locations)
     #     player.place(*spot, city)
 
-    player.place(3, 3, city)
+    player.place(x=3, y=3, level=1, gamemap=city)
 
 
 def generate_npcs(city, structures, roads):
-    level = 1
-    npcs_to_generate = 46
+    # level = 1
+    npcs_to_generate = 5
     while npcs_to_generate:
         random_room = random.choice(structures)
+        random_level = random.randint(0, 4)
         x, y = random.choice(slices_to_xys(*(random_room.inner)))
-        if city.tiles[level][(x, y)] in tile_types.EMPTY_TILES:
+        if city.tiles[random_level][(x, y)] in tile_types.EMPTY_TILES:
             # entity_factory.orc.spawn(city,  x, y)
-            entity_factory.npc.spawn(city, x, y)
+            entity_factory.npc.spawn(city, random_level, x, y)
             npcs_to_generate -= 1
 
 
 def generate_items(city, structures):
     # TODO improve around item generation
     # TODO fix level / item generation
-    level = 1
+    # level = 1
     items_to_place = len(structures)
     while items_to_place:
         random_room = random.choice(structures)
+        level = random.randint(0, 4)
         x, y = random.choice(slices_to_xys(*(random_room.inner)))
         if city.tiles[level][(x, y)] in tile_types.EMPTY_TILES:
             val = random.random()
             if val <= 0.2:
-                entity_factory.lightning_scroll.spawn(city, x, y)
+                entity_factory.lightning_scroll.spawn(city, level, x, y)
             elif val <= 0.5:
-                entity_factory.confusion_scroll.spawn(city, x, y)
+                entity_factory.confusion_scroll.spawn(city, level, x, y)
             elif val <= 0.7:
-                entity_factory.health_potion.spawn(city, x, y)
+                entity_factory.health_potion.spawn(city, level, x, y)
             else:
-                entity_factory.fireball_scroll.spawn(city, x, y)
+                entity_factory.fireball_scroll.spawn(city, level, x, y)
             items_to_place -= 1
 
 

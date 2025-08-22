@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from components.fighter import Fighter
     from components.inventory import Inventory
     from components.consumable import Consumable
+    from components.equippable import Equippable
 
 
 T = TypeVar("T", bound="Entity")
@@ -55,12 +56,12 @@ class Entity:
     def gamemap(self) -> GameMap:
         return self.parent.gamemap
 
-    def spawn(self: T, gamemap: GameMap, x: int, y: int) -> T:
+    def spawn(self: T, gamemap: GameMap, level: int, x: int, y: int) -> T:
         """Spawn a copy of this instance at the given location."""
         clone = copy.deepcopy(self)
         clone.x = x
         clone.y = y
-        # clone.level = level
+        clone.level = level
         clone.parent = gamemap
 
         gamemap.entities.add(clone)
@@ -71,11 +72,13 @@ class Entity:
         self.x += dx
         self.y += dy
 
-    def place(self, x: int, y: int, gamemap: Optional[GameMap] = None) -> None:
+    def place(
+        self, x: int, y: int, level: int = 1, gamemap: Optional[GameMap] = None
+    ) -> None:
         """Place this entity at a new location.  Handles moving across GameMaps."""
         self.x = x
         self.y = y
-        # self.level = level
+        self.level = level
         if gamemap:
             if hasattr(self, "parent"):  # Possibly uninitialized.
                 if self.parent is self.gamemap:
@@ -143,7 +146,8 @@ class Item(Entity):
         char: str = "?",
         color: Tuple[int, int, int] = (255, 255, 255),
         name: str = "<Unnamed>",
-        consumable: Consumable,
+        consumable: Optional[Consumable] = None,
+        equippable: Optional[Equippable] = None,
     ):
         super().__init__(
             x=x,
@@ -157,4 +161,9 @@ class Item(Entity):
         )
 
         self.consumable = consumable
-        self.consumable.parent = self
+        if self.consumable:
+            self.consumable.parent = self
+
+        self.equippable = equippable
+        if self.equippable:
+            self.equippable.parent = self
