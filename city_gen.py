@@ -721,6 +721,7 @@ def generate_items(city, structures):
     # TODO fix level / item generation
     # level = 1
     items_to_place = len(structures)
+    items_to_place = 50
     while items_to_place:
         random_room = random.choice(structures)
         level = random.randint(0, 4)

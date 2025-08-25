@@ -137,10 +137,16 @@ class Engine:
 
     def render_inventory(self, console):
         if len(self.player.inventory.items) > 0:
-            for i, item in enumerate(self.player.inventory.items):
-                # item_key = chr(ord("a") + i)
-                # console.print(X_POS + 1, Y_POS + i + 1, f"({item_key}) {item.name}")
-                console.print(X_POS + 1, Y_POS + i + 1, item.name)
+            # print(self.player.inventory.item_counts)
+            for i, (item, count) in enumerate(
+                self.player.inventory.item_counts.items()
+            ):
+                item_string = f"{item.ljust(20)} x{count:02}"
+                is_equipped = self.player.equipment.item_is_equipped(item)
+
+                if is_equipped:
+                    item_string = f"(E) {item.ljust(16)} x{count:02}"
+                console.print(X_POS + 1, Y_POS + i + 1, item_string)
         else:
             console.print(X_POS + 1, Y_POS + 2, " (Empty) ")
 

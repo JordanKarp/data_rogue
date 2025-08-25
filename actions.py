@@ -74,7 +74,9 @@ class ItemAction(Action):
     @property
     def target_actor(self) -> Optional[Actor]:
         """Return the actor at this actions destination."""
-        return self.engine.game_map.get_actor_at_location(*self.target_xy)
+        return self.engine.game_map.get_actor_at_location(
+            *self.target_xy, self.entity.level
+        )
 
     def perform(self) -> None:
         """Invoke the items ability, this action will be given to provide context."""
@@ -84,7 +86,19 @@ class ItemAction(Action):
 
 class DropItem(ItemAction):
     def perform(self) -> None:
+        if self.entity.equipment.item_is_equipped(self.item):
+            self.entity.equipment.toggle_equip(self.item)
+
         self.entity.inventory.drop(self.item)
+
+
+class EquipAction(Action):
+    def __init__(self, entity: Actor, item: Item):
+        super().__init__(entity)
+        self.item = item
+
+    def perform(self) -> None:
+        self.entity.equipment.toggle_equip(self.item)
 
 
 class ActionWithDirection(Action):
@@ -93,6 +107,8 @@ class ActionWithDirection(Action):
 
         self.dx = dx
         self.dy = dy
+        # print(vars(entity))
+        self.level = entity.level
 
     @property
     def dest_xy(self) -> Tuple[int, int]:
@@ -102,12 +118,14 @@ class ActionWithDirection(Action):
     @property
     def blocking_entity(self) -> Optional[Entity]:
         """Return the blocking entity at this actions destination.."""
-        return self.engine.game_map.get_blocking_entity_at_location(*self.dest_xy)
+        return self.engine.game_map.get_blocking_entity_at_location(
+            *self.dest_xy, self.level
+        )
 
     @property
     def target_actor(self) -> Optional[Actor]:
         """Return the actor at this actions destination."""
-        return self.engine.game_map.get_actor_at_location(*self.dest_xy)
+        return self.engine.game_map.get_actor_at_location(*self.dest_xy, self.level)
 
     def perform(self) -> None:
         raise NotImplementedError()
@@ -129,7 +147,7 @@ class MovementAction(ActionWithDirection):
         if not self.engine.game_map.tiles[floor]["walkable"][dest_x, dest_y]:
             # Destination is blocked by a tile.
             raise exceptions.Impossible("That way is blocked.")
-        if self.engine.game_map.get_blocking_entity_at_location(dest_x, dest_y):
+        if self.engine.game_map.get_blocking_entity_at_location(dest_x, dest_y, floor):
             # Destination is blocked by an entity.
             raise exceptions.Impossible("That way is blocked.")
 

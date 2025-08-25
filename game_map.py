@@ -62,20 +62,28 @@ class GameMap:
         yield from (entity for entity in self.entities if isinstance(entity, Item))
 
     def get_blocking_entity_at_location(
-        self, loc_x: int, loc_y: int
+        self, loc_x: int, loc_y: int, level: int = 1
     ) -> Optional[Entity]:
         return next(
             (
                 entity
                 for entity in self.entities
-                if entity.blocks_movement and entity.x == loc_x and entity.y == loc_y
+                if entity.blocks_movement
+                and entity.x == loc_x
+                and entity.y == loc_y
+                and entity.level == level
             ),
             None,
         )
 
-    def get_actor_at_location(self, x: int, y: int) -> Optional[Actor]:
+    def get_actor_at_location(self, x: int, y: int, level: int) -> Optional[Actor]:
         return next(
-            (actor for actor in self.actors if actor.x == x and actor.y == y), None
+            (
+                actor
+                for actor in self.actors
+                if actor.x == x and actor.y == y and actor.level == level
+            ),
+            None,
         )
 
     def in_bounds(self, x: int, y: int) -> bool:
