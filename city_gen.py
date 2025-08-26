@@ -12,7 +12,7 @@ from utility import slices_to_xys
 CITY_DEFAULTS = {
     "MAP_WIDTH": 50,
     "MAP_HEIGHT": 50,
-    "MAX_LEVELS": 5,
+    "MAX_LEVELS": 2,
     "MIN_BLOCK_SIZE": 10,
     "TREE_BORDER_WIDTH": 3,
     "ROAD_WIDTH": 3,
@@ -61,7 +61,7 @@ def generate_city(
     structures_and_types = generate_structure_types(structures, city_details)
 
     for structure, structure_type in structures_and_types.items():
-        generate_structure_details(city, structure, structure_type)
+        generate_structure_details(city, structure, structure_type, city_details)
 
     # Generate Actors and Items
     generate_actors(city, player, structures, roads)
@@ -75,7 +75,7 @@ def generate_city(
 def generate_ground_and_sky(city, levels):
     rows = city.height
     cols = city.width
-    map_struct = RectangularRoom(0, 0, cols - 1, rows - 1)
+    map_struct = RectangularStructure(0, 0, cols - 1, rows - 1)
     place_tiles(city, 0, map_struct.area, [tile_types.underground])
     if levels >= 2:
         for level in range(2, levels):
@@ -358,7 +358,7 @@ def rect_touch_or_overlap(rects: List[Tuple[int, int, int, int]]):
     return results
 
 
-def generate_structure_details(city, structure, structure_type):
+def generate_structure_details(city, structure, structure_type, city_details):
     # TODO add more structures
     # TODO add structure division
     # TODO add new super structure type
@@ -367,7 +367,7 @@ def generate_structure_details(city, structure, structure_type):
         num_trees = 6
         generate_park(city, structure, num_trees)
     else:
-        generate_building(city, structure, 0, 5)
+        generate_building(city, structure, 0, city_details["MAX_LEVELS"])
 
     if structure_type == "Office":
         generate_office(city, 1, structure)
@@ -705,10 +705,10 @@ def generate_player(city, player):
 
 def generate_npcs(city, structures, roads):
     # level = 1
-    npcs_to_generate = 5
+    npcs_to_generate = 50
     while npcs_to_generate:
         random_room = random.choice(structures)
-        random_level = random.randint(0, 4)
+        random_level = 1
         x, y = random.choice(slices_to_xys(*(random_room.inner)))
         if city.tiles[random_level][(x, y)] in tile_types.EMPTY_TILES:
             # entity_factory.orc.spawn(city,  x, y)
@@ -724,7 +724,7 @@ def generate_items(city, structures):
     items_to_place = 50
     while items_to_place:
         random_room = random.choice(structures)
-        level = random.randint(0, 4)
+        level = 1
         x, y = random.choice(slices_to_xys(*(random_room.inner)))
         if city.tiles[level][(x, y)] in tile_types.EMPTY_TILES:
             val = random.random()

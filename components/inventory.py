@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import Counter
+from collections import OrderedDict
 from typing import Dict, List, TYPE_CHECKING
 
 from components.base_component import BaseComponent
@@ -14,20 +14,34 @@ class Inventory(BaseComponent):
 
     def __init__(self, capacity: int):
         self.capacity = capacity
-        self.items: List[Item] = []
+        self.remaining = capacity
+        # self.items: List[Item] = []
+        self.items = OrderedDict()
 
-    def drop(self, item: Item) -> None:
+    def remove_item(self, item: Item) -> None:
+        if self.items[item.name]:
+            if self.items[item.name].get("count", None) > 1:
+                self.items[item.name]["count"] -= 1
+            elif self.items[item.name].get("count", None) == 1:
+                del self.items[item.name]
+            self.remaining += 1
+        else:
+            print("No item to drop")
+
+    def drop(self, item: Item, add_message: bool = True) -> None:
         """
         Removes an item from the inventory and restores it to the game map, at the player's current location.
         """
-        self.items.remove(item)
+        self.remove_item(item)
+
         item.place(self.parent.x, self.parent.y, self.parent.level, self.gamemap)
 
-        self.engine.message_log.add_message(f"You dropped the {item.name}.")
+        if add_message:
+            self.engine.message_log.add_message(f"You dropped the {item.name}.")
 
     @property
     def item_counts(self):
-        item_counts = {}
+        item_counts = OrderedDict()
         for item in self.items:
             if item.name in item_counts:
                 item_counts[item.name] += 1
@@ -35,33 +49,16 @@ class Inventory(BaseComponent):
                 item_counts[item.name] = 1
         return item_counts
 
-    # def use(self, item: Item) -> None:
-    #     if self.items[item] > 1:
-    #         self.items[item] -= 1
-    #     elif self.items[item] == 1:
-    #         self.items.pop(item, None)
+    def add_item(self, item: Item, add_message: bool = True) -> None:
+        """
+        Adds an item from the inventory.
+        """
+        if self.remaining:
+            if item.name not in self.items:
+                self.items[item.name] = {"object": item, "count": 1}
+            else:
+                self.items[item.name]["count"] += 1
+            self.remaining -= 1
 
-    # def drop(self, item: Item) -> None:
-    #     """
-    #     Removes an item from the inventory and restores it to the game map, at the player's current location.
-    #     """
-    #     if not self.items.get(item, None):
-    #         return
-
-    #     self.use(item)
-    #     item.place(self.parent.x, self.parent.y, self.parent.level, self.gamemap)
-
-    #     self.engine.message_log.add_message(f"You dropped a {item.name}.")
-
-    # def add_item(self, item: Item) -> None:
-    #     """
-    #     Adds an item from the inventory.
-    #     """
-
-    #     if item.name not in [item.name for item in self.items]:
-    #         self.items[item] = 1
-    #     else:
-    #         self.items[item] += 1
-
-    #     print(self.items)
-    #     self.engine.message_log.add_message(f"You picked a {item.name}.")
+            if add_message:
+                self.engine.message_log.add_message(f"You picked a {item.name}.")

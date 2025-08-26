@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from components.inventory import Inventory
     from components.consumable import Consumable
     from components.equippable import Equippable
+    from components.dialog import Dialog
 
 
 T = TypeVar("T", bound="Entity")
@@ -109,6 +110,7 @@ class Actor(Entity):
         fighter: Fighter,
         inventory: Inventory,
         experience: Experience,
+        dialog: Dialog,
     ):
         super().__init__(
             x=x,
@@ -135,6 +137,9 @@ class Actor(Entity):
         self.experience = experience
         self.experience.parent = self
 
+        self.dialog = dialog
+        self.dialog.parent = self
+
     @property
     def is_alive(self) -> bool:
         """Returns True as long as this actor can perform actions."""
@@ -153,6 +158,7 @@ class Item(Entity):
         name: str = "<Unnamed>",
         consumable: Optional[Consumable] = None,
         equippable: Optional[Equippable] = None,
+        description: str = "",
     ):
         super().__init__(
             x=x,
@@ -164,6 +170,7 @@ class Item(Entity):
             blocks_movement=False,
             render_order=RenderOrder.ITEM,
         )
+        self.description = description
 
         self.consumable = consumable
         if self.consumable:

@@ -28,6 +28,7 @@ X_POS = 25
 Y_POS = 3
 
 DISPLAYS = ["Character", "Inventory", "Dialog", "Notes", "History"]
+DIALOG_INDEX = 2
 
 
 class Engine:
@@ -43,6 +44,7 @@ class Engine:
         self.clock = GameClock()
         self.camera = camera
         self.active_hud_index = 0
+        self.X_POS, self.Y_POS = X_POS, Y_POS
 
     def handle_enemy_turns(self) -> None:
         for entity in set(self.game_map.actors) - {self.player}:
@@ -137,18 +139,24 @@ class Engine:
 
     def render_inventory(self, console):
         if len(self.player.inventory.items) > 0:
-            # print(self.player.inventory.item_counts)
-            for i, (item, count) in enumerate(
-                self.player.inventory.item_counts.items()
+            for i, (item_name, item_dict) in enumerate(
+                self.player.inventory.items.items()
             ):
-                item_string = f"{item.ljust(20)} x{count:02}"
-                is_equipped = self.player.equipment.item_is_equipped(item)
 
-                if is_equipped:
-                    item_string = f"(E) {item.ljust(16)} x{count:02}"
+                item = item_dict["object"]
+                count = item_dict["count"]
+                item_string = f"{item_name.ljust(20)} x{count:02}"
+                if self.player.equipment.item_is_equipped(item):
+                    item_string = f"(E) {item_name.ljust(16)} x{count:02}"
                 console.print(X_POS + 1, Y_POS + i + 1, item_string)
         else:
             console.print(X_POS + 1, Y_POS + 2, " (Empty) ")
+
+        console.print(
+            X_POS + 20,
+            Y_POS,
+            f"{(self.player.inventory.capacity - self.player.inventory.remaining):02}/{self.player.inventory.capacity}",
+        )
 
     def render_dialog(self, console):
         pass

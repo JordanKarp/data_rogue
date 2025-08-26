@@ -37,7 +37,7 @@ class Consumable(BaseComponent):
         entity = self.parent
         inventory = entity.parent
         if isinstance(inventory, Inventory):
-            inventory.items.remove(entity)
+            inventory.remove_item(entity)
 
 
 class HealingConsumable(Consumable):
@@ -109,7 +109,7 @@ class LightningDamageConsumable(Consumable):
         for actor in self.engine.game_map.actors:
             if (
                 actor is not consumer
-                and self.parent.game_map.visible[floor][actor.x, actor.y]
+                # and self.parent.game_map.visible[floor][actor.x, actor.y]
                 and self.engine.game_map.visible[floor][actor.x, actor.y]
             ):
                 distance = consumer.distance(actor.x, actor.y)

@@ -1,0 +1,21 @@
+{
+  "start_node": "start",
+  "nodes": {
+    "start": {
+      "text": "Hello there, traveler! What brings you to our city?",
+      "options": [
+        { "text": "Just exploring.", "next": "explore" },
+        { "text": "Looking for work.", "next": "work" },
+        { "text": "Nothing. Goodbye.", "next": null }
+      ]
+    },
+    "explore": {
+      "text": "Ah, a sightseer! Don't miss the market square.",
+      "options": [{ "text": "Thanks!", "next": null }]
+    },
+    "work": {
+      "text": "Work, you say? Try the docks, they always need hands.",
+      "options": [{ "text": "I'll check it out.", "next": null }]
+    }
+  }
+}
