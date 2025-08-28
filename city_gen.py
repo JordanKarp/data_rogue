@@ -7,6 +7,7 @@ from rectangular_road import RectangularRoad
 from rectangular_room import RectangularRoom
 import tile_types
 import entity_factory
+from dialog_data.default_text import WELCOME_TEXT
 from utility import slices_to_xys
 
 CITY_DEFAULTS = {
@@ -69,6 +70,9 @@ def generate_city(
     # Generate Player
     generate_player(city, player)
 
+    sign = place_entity(city, 1, (4, 2), entity_factory.sign, True)
+    sign.information.clear()
+    sign.information.add_page(WELCOME_TEXT)
     return city
 
 
@@ -491,8 +495,10 @@ def generate_office(city, level, structure):
     # place_tiles(city, level, [(x, y)], [tile_types.table], True)
     place_tiles(city, level, [(x, y - 1)], [tile_types.chair_horiz], True)
 
-    computer_desk = entity_factory.computer.spawn(city, level, x, y)
-    computer_desk.information.add_text("Hello!")
+    if computer_desk := place_entity(
+        city, level, (x, y), entity_factory.computer, False
+    ):
+        computer_desk.information.add_page("Hello! I should be on page 3!")
 
 
 def generate_library(city, level, structure):
@@ -736,15 +742,14 @@ def generate_player(city, player):
 
 def generate_npcs(city, structures, roads):
     # level = 1
-    npcs_to_generate = 5
+    npcs_to_generate = 25
     while npcs_to_generate:
         random_room = random.choice(structures)
         random_level = 1
         x, y = random.choice(slices_to_xys(*(random_room.inner)))
-        if city.tiles[random_level][(x, y)] in tile_types.EMPTY_TILES:
-            # entity_factory.orc.spawn(city,  x, y)
-            entity_factory.npc.spawn(city, random_level, x, y)
-            npcs_to_generate -= 1
+        place_entity(city, random_level, (x, y), entity_factory.npc)
+
+        npcs_to_generate -= 1
 
 
 def generate_items(city, structures):
@@ -757,17 +762,23 @@ def generate_items(city, structures):
         random_room = random.choice(structures)
         level = 1
         x, y = random.choice(slices_to_xys(*(random_room.inner)))
-        if city.tiles[level][(x, y)] in tile_types.EMPTY_TILES:
-            val = random.random()
-            if val <= 0.2:
-                entity_factory.lightning_scroll.spawn(city, level, x, y)
-            elif val <= 0.5:
-                entity_factory.confusion_scroll.spawn(city, level, x, y)
-            elif val <= 0.7:
-                entity_factory.health_potion.spawn(city, level, x, y)
-            else:
-                entity_factory.fireball_scroll.spawn(city, level, x, y)
-            items_to_place -= 1
+
+        val = random.random()
+        if val <= 0.2:
+            place_entity(city, level, (x, y), entity_factory.lightning_scroll, False)
+        elif val <= 0.5:
+            place_entity(city, level, (x, y), entity_factory.confusion_scroll, False)
+        elif val <= 0.7:
+            place_entity(city, level, (x, y), entity_factory.health_potion, False)
+        else:
+            place_entity(city, level, (x, y), entity_factory.fireball_scroll, False)
+
+        items_to_place -= 1
+
+
+def place_entity(city, level, spot, entity, override=False):
+    if city.tiles[level][spot] in tile_types.EMPTY_TILES or override:
+        return entity.spawn(city, level, *spot)
 
 
 def place_tile(city, level, spot, tile_list, override=True):

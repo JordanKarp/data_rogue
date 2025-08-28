@@ -64,18 +64,21 @@ computer = Fixture(
     char="Γ",
     color=(121, 246, 192),
     name="Computer",
-    description="A DataCorp Laptop",
+    description="a DataCorp Laptop",
     information=Information(
-        "This is a computer.With two text lines. This is a really long sentence to be able to test the length of the read information event handler. This is a bit more to that last sentence, cause I dont think it's enough yet."
+        [
+            "This is a computer. With two text pages.",
+            "This is a really long sentence to be able to test the length of the read information event handler. This is a bit more to that last sentence, cause I dont think it's enough yet.This is a really long sentence to be able to test the length of the read information event handler. This is a bit more to that last sentence, cause I dont think it's enough yet.This is a really long sentence to be able to test the length of the read information event handler. This is a bit more to that last sentence, cause I dont think it's enough yet.",
+        ]
     ),
 )
 
 sign = Fixture(
-    char="Γ",
+    char="ß",
     color=(150, 45, 0),
     name="Sign",
-    description="A wooden Sign",
-    information=Information("This is a sign."),
+    description="a wooden sign",
+    information=Information(["This is a sign."]),
 )
 
 

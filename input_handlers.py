@@ -13,7 +13,7 @@ import color
 import exceptions
 
 if TYPE_CHECKING:
-    from engine import Engine, DIALOG_INDEX
+    from engine import Engine
     from entity import Item
 
 
@@ -93,6 +93,7 @@ class ItemPopupMessage(PopupMessage):
 
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[BaseEventHandler]:
         """Any key returns to the parent handler."""
+        # ! TODO fix inventory use/drop on display item
         # key = event.sym
         # if key == keys.KEY_MAPPING['DROP']
         #     return InventoryDropHandler(self.engine).on_item_selected()
@@ -110,13 +111,11 @@ class EventHandler(BaseEventHandler):
         action_or_state = self.dispatch(event)
         if isinstance(action_or_state, BaseEventHandler):
             return action_or_state
-
-        result = self.handle_action(action_or_state)
-        if result:
+        # result = self.handle_action(action_or_state)
+        if result := self.handle_action(action_or_state):
             # A valid action was performed.
             if isinstance(result, dict):
                 if "information" in result:
-                    print("info test")
                     return InformationHandler(self.engine, result["information"])
                 elif "dialog" in result:
                     return DialogHandler(self.engine, result["dialog"])
@@ -163,9 +162,7 @@ class AskUserEventHandler(EventHandler):
 
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
         """By default any key exits this input handler."""
-        if event.sym in keys.MODIFIER_KEYS:
-            return None
-        return self.on_exit()
+        return None if event.sym in keys.MODIFIER_KEYS else self.on_exit()
 
     def ev_mousebuttondown(
         self, event: tcod.event.MouseButtonDown
@@ -188,7 +185,7 @@ class DialogHandler(AskUserEventHandler):
 
     def on_render(self, console):
         super().on_render(console)
-        self.engine.change_hud(DIALOG_INDEX)
+        self.engine.change_hud(2)
         node_text = self.npc.dialog.get_current_text()
         console.print(self.engine.X_POS, self.engine.Y_POS + 1, node_text)
 
@@ -208,7 +205,7 @@ class DialogHandler(AskUserEventHandler):
         if 0 <= index < len(choices):
             action = self.npc.dialog.choose(index)
             if action == "open_shop":
-                # TODO
+                # TODO Shop
                 print("OPEN SHOP HERE")
                 # self.engine.event_handler = MerchantHandler(self.engine, self.npc)
             elif self.npc.dialog.current_node is None:
@@ -476,34 +473,52 @@ class InformationHandler(AskUserEventHandler):
     def __init__(self, engine: Engine, information: str):
         super().__init__(engine)
         self.information = information
-
-        self.lines = self.information.text
         self.cursor = 0
+        self.spacing = 4
 
     def on_render(self, console: tcod.Console) -> None:
         super().on_render(console)
-        self.engine.change_hud(3)
 
+        title_text = f"{self.information.parent.name} info"
+        multi = len(self.information.pages) > 1
+        if multi:
+            title_text += f" - {self.information.idx+1}/{self.information.total_pages}"
+        console.draw_frame(
+            x=self.spacing,
+            y=self.spacing,
+            width=console.width - (self.spacing * 2),
+            height=console.height - (self.spacing * 2),
+            title=title_text,
+            clear=True,
+            bg=color.black,
+            fg=color.white,
+        )
         console.print_box(
-            x=self.engine.X_POS,
-            y=self.engine.Y_POS + 1,
-            width=25,
-            height=23 - (self.engine.Y_POS + 1),
-            string=self.lines,
+            x=self.spacing + 1,
+            y=self.spacing + 1,
+            width=console.width - ((self.spacing + 1) * 2),
+            height=console.height - (self.spacing * 2),
+            string=self.information.text,
+            bg=color.black,
+        )
+
+        exit_text = (
+            "ESC to exit       ◄ and ► to cycle pages" if multi else "ESC to exit"
         )
         console.print(
-            x=self.engine.X_POS,
-            y=24,
-            string="ESC to exit",
+            x=self.spacing + 1,
+            y=console.height * 3 // 4 + 1,
+            string=exit_text,
+            bg=color.asphalt,
         )
 
     def ev_keydown(self, event: tcod.event.KeyDown) -> None:
         # FIX infor cursor useless
         key = event.sym
-        if key == keys.KEY_MAPPING["UP"] and self.cursor > 0:
-            self.cursor -= 1
-        elif key == keys.KEY_MAPPING["DOWN"] and self.cursor < len(self.lines) - 20:
-            self.cursor += 1
+        if key == keys.KEY_MAPPING["LEFT"]:
+            self.information.increment_prev_page()
+        elif key == keys.KEY_MAPPING["RIGHT"]:
+            self.information.increment_next_page()
         elif key == tcod.event.KeySym.ESCAPE:
             return MainGameEventHandler(self.engine)
 
@@ -569,7 +584,6 @@ class AreaRangedAttackHandler(SelectIndexHandler):
 class MainGameEventHandler(EventHandler):
 
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
-        # TODO Fix keys so one key can pickup items, take stairs, leave level, etc.
         action: Optional[actions.Action] = None
 
         key = event.sym

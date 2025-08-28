@@ -106,7 +106,7 @@ class PickupAction(Action):
     def __init__(self, entity: Actor):
         super().__init__(entity)
 
-    def perform(self) -> None:
+    def perform(self) -> None:  # sourcery skip: extract-method
         actor_location_x = self.entity.x
         actor_location_y = self.entity.y
         actor_location_level = self.entity.level
@@ -249,49 +249,36 @@ class MeleeAction(ActionWithDirection):
             )
 
 
-# class SpeakAction(ActionWithDirection):
-#     def perform(self) -> None:
-#         target = self.target_actor
+class SpeakAction(Action):
+    def __init__(self, entity: Actor, target: str):
+        super().__init__(entity)
+        self.target = target
 
-#         if not target:
-#             # No entity to attack.
-#             raise exceptions.Impossible("No one to speak to.")
-
-#         # self.engine.event_handler = DialogHandler(self.engine, target)
-#         # print(self.engine.event_handler)
-#         return DialogHandler(self.engine, target)
-
-#         # msg = random.choice(dialog_data.GREETINGS)
-#         # msg = f"{target.name}: {msg}"
-#         # self.engine.message_log.add_message(
-#         #     msg.format(player_name=self.entity.name), color.white
-#         # )
+    def perform(self) -> None:
+        return {"dialog": self.target}
 
 
-# class ReadAction(Action):
-#     def __init__(self, entity: Actor, information: str):
-#         super().__init__(entity)
-#         self.information = information
+class ReadAction(Action):
+    def __init__(self, entity: Actor, information: str):
+        super().__init__(entity)
+        self.information = information
 
-#     def perform(self) -> None:
-#         # Log reading (optional)
-#         self.engine.message_log.add_message(f"You read the information.")
-#         # Push the UI handler for info reading
-#         self.engine.event_handler = InformationHandler(self.engine, self.information)
+    def perform(self) -> None:
+        return {"information": self.information}
 
 
 class BumpAction(ActionWithDirection):
     def perform(self) -> None:
-        # TODO
         if not self.target_actor:
             if self.blocking_entity and self.blocking_entity.information:
-                return {"information": self.blocking_entity.information}
+                info = self.blocking_entity.information
+                return ReadAction(self.entity, info).perform()
             return MovementAction(self.entity, self.dx, self.dy).perform()
         if self.target_actor.name == "NPC":
-            return
-            # return SpeakAction(self.entity, self.dx, self.dy).perform()
+            return SpeakAction(self.entity, self.target_actor).perform()
         return MeleeAction(self.entity, self.dx, self.dy).perform()
 
 
 class WaitAction(Action):
-    def perform(self) -> None: ...
+    def perform(self) -> None:
+        pass
