@@ -37,8 +37,40 @@ class RectangularStructure:
     def center(self) -> Tuple[int, int]:
         center_x = int((self.x1 + self.x2) / 2)
         center_y = int((self.y1 + self.y2) / 2)
-
         return center_x, center_y
+
+    @property
+    def upper_left_center(self) -> Tuple[int, int]:
+        x = int((self.x1 + self.x2) // 4)
+        y = int((self.y1 + self.y2) // 4)
+        return x, y
+
+    @property
+    def upper_right_center(self) -> Tuple[int, int]:
+        x = int((self.x1 + self.x2) * 3 // 4)
+        y = int((self.y1 + self.y2) // 4)
+        return x, y
+
+    @property
+    def lower_left_center(self) -> Tuple[int, int]:
+        x = int((self.x1 + self.x2) // 4)
+        y = int((self.y1 + self.y2) * 3 // 4)
+        return x, y
+
+    @property
+    def lower_right_center(self) -> Tuple[int, int]:
+        x = int((self.x1 + self.x2) * 3 // 4)
+        y = int((self.y1 + self.y2) * 3 // 4)
+        return x, y
+
+    @property
+    def quadrant_centers(self) -> List[Tuple[int, int]]:
+        return [
+            (self.upper_left_center),
+            (self.upper_right_center),
+            (self.lower_left_center),
+            (self.lower_right_center),
+        ]
 
     @property
     def area(self) -> Tuple[slice, slice]:
@@ -131,8 +163,7 @@ class RectangularStructure:
         vertical_tiles = []
         #  Left and right edges, excluding corners to avoid duplicates
         for y in range(self.y1 + 1, self.y2):
-            vertical_tiles.append((self.x1, y))  # left
-            vertical_tiles.append((self.x2, y))  # right
+            vertical_tiles.extend(((self.x1, y), (self.x2, y)))
         return vertical_tiles
 
     @property
@@ -140,8 +171,7 @@ class RectangularStructure:
         horizontal_tiles = []
         # Top and bottom edges
         for x in range(self.x1 + 1, self.x2):
-            horizontal_tiles.append((x, self.y1))  # top
-            horizontal_tiles.append((x, self.y2))  # bottom
+            horizontal_tiles.extend(((x, self.y1), (x, self.y2)))
         return horizontal_tiles
 
     @property

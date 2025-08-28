@@ -5,8 +5,12 @@ INCREMENT_MINUTES = 1
 
 
 class GameClock:
-    def __init__(self, start_time=GAME_START):
+    def __init__(self, start_time: datetime = GAME_START):
         self.time = start_time
 
     def increment(self):
         self.time += timedelta(minutes=INCREMENT_MINUTES)
+
+    @property
+    def display(self):
+        return self.time.strftime("%H:%M  %b-%d")

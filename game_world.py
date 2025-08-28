@@ -1,5 +1,4 @@
 from engine import Engine
-from game_map import GameMap
 
 from city_gen import generate_city, CITY_DEFAULTS
 

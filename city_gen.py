@@ -21,11 +21,11 @@ CITY_DEFAULTS = {
         "Library",
     ],
     "FILLER_STRUCTURES": [
-        "Park",
-        "Bathroom",
-        "Lobby",
+        # "Park",
+        # "Bathroom",
+        # "Lobby",
         "Office",
-        "Conference Room",
+        # "Conference Room",
     ],
 }
 
@@ -129,12 +129,12 @@ def split_rectangle(rect: RectangularStructure, min_size=3, split_chance=0.6):
     return rooms
 
 
-def split_and_place_doors(rect: RectangularStructure, min_size=4):
+def split_and_place_doors(rect: RectangularRoom, min_size=9):
     """Split the rectangle into rooms and place doors during each split."""
     rooms = []
     doors = []
 
-    def _split(r: RectangularStructure):
+    def _split(r: RectangularRoom):
         # Stop if too small
         if r.width <= min_size and r.height <= min_size:
             rooms.append(r)
@@ -144,15 +144,15 @@ def split_and_place_doors(rect: RectangularStructure, min_size=4):
         if r.width > r.height and r.width >= min_size * 2:
             # Vertical split
             split_at = random.randint(min_size, r.width - min_size)
-            left = RectangularStructure(r.x, r.y, split_at, r.height)
-            right = RectangularStructure(
-                r.x + split_at, r.y, r.width - split_at, r.height
-            )
+            left = RectangularRoom(r.x, r.y, split_at, r.height)
+            right = RectangularRoom(r.x + split_at, r.y, r.width - split_at, r.height)
 
             # Place door in the shared wall
             door_y = random.randint(r.y + 1, r.y + r.height - 2)
             door_x = r.x + split_at
             doors.append((door_x, door_y))
+            left.add_door(door_x, door_y)
+            right.add_door(door_x, door_y)
 
             _split(left)
             _split(right)
@@ -160,15 +160,15 @@ def split_and_place_doors(rect: RectangularStructure, min_size=4):
         elif r.height >= min_size * 2:
             # Horizontal split
             split_at = random.randint(min_size, r.height - min_size)
-            top = RectangularStructure(r.x, r.y, r.width, split_at)
-            bottom = RectangularStructure(
-                r.x, r.y + split_at, r.width, r.height - split_at
-            )
+            top = RectangularRoom(r.x, r.y, r.width, split_at)
+            bottom = RectangularRoom(r.x, r.y + split_at, r.width, r.height - split_at)
 
             # Place door in the shared wall
             door_x = random.randint(r.x + 1, r.x + r.width - 2)
             door_y = r.y + split_at
             doors.append((door_x, door_y))
+            top.add_door(door_x, door_y)
+            bottom.add_door(door_x, door_y)
 
             _split(top)
             _split(bottom)
@@ -367,48 +367,66 @@ def generate_structure_details(city, structure, structure_type, city_details):
         num_trees = 6
         generate_park(city, structure, num_trees)
     else:
-        generate_building(city, structure, 0, city_details["MAX_LEVELS"])
-
-    if structure_type == "Office":
-        generate_office(city, 1, structure)
-        generate_stairwell(city, structure)
-
-    elif structure_type == "Conference Room":
-        generate_conference_room(city, 1, structure)
-
-    elif structure_type == "Bathroom":
-        generate_bathroom(city, 1, structure)
-
-    elif structure_type == "Library":
-        generate_library(city, 1, structure)
-
-    elif structure_type == "Lobby":
-        # for tile in structure.area:
-        #     if city.tiles[1][tile] == tile_types.reserved_floor:
-        #         if
-
-        generate_stairwell(city, structure, horiz_spot=False)
-
-    elif structure_type == "Single Floor Stairwell":
-        generate_stairwell(city, structure, 1, 2)
-    elif structure_type == "Double Floor Stairwell":
-        generate_stairwell(city, structure, 1, 2)
-    elif structure_type == "Full Stairwell":
-        generate_stairwell(city, structure)
-    elif structure_type == "Cellar Door Stairwell":
-        generate_stairwell(city, structure, 0, 1)
+        generate_building(
+            city,
+            structure,
+            structure_type,
+            0,
+            city_details["MAX_LEVELS"],
+        )
 
 
 def generate_building(
-    city, structure, bottom_floor=0, top_floor=CITY_DEFAULTS["MAX_LEVELS"]
+    city,
+    structure,
+    structure_type,
+    bottom_floor=0,
+    top_floor=CITY_DEFAULTS["MAX_LEVELS"],
 ):
+    # TODO rethink stairwells, and this floor by floor generation method
     for floor in range(bottom_floor, top_floor):
         generate_flooring(city, floor, structure, tile_types.floor)
         generate_walls(city, floor, structure)
-        if floor != 0:
+
+        rooms, doors = split_and_place_doors(structure, min_size=4)
+
+        for room in rooms:
+            generate_walls(city, floor, room)
+            if structure_type == "Office":
+                generate_office(city, 1, room)
+                generate_stairwell(city, room)
+
+            elif structure_type == "Conference Room":
+                generate_conference_room(city, floor, room)
+
+            elif structure_type == "Bathroom":
+                generate_half_bathroom(city, floor, room)
+                # generate_bathroom(city, floor, structure)
+
+            elif structure_type == "Library":
+                generate_library(city, floor, room)
+
+            elif structure_type == "Lobby":
+                generate_stairwell(city, room, horiz_spot=False)
+
+            elif structure_type == "Single Floor Stairwell":
+                generate_stairwell(city, room, 1, 2)
+            elif structure_type == "Double Floor Stairwell":
+                generate_stairwell(city, room, 1, 2)
+            elif structure_type == "Full Stairwell":
+                generate_stairwell(city, room)
+            elif structure_type == "Cellar Door Stairwell":
+                generate_stairwell(city, room, 0, 1)
+
+        place_tiles(city, floor, doors, [tile_types.door], True)
+
+        if floor > 0:
             generate_windows(city, floor, structure)
         if floor == 1:
             generate_doors(city, floor, structure)
+
+    # stairwell = random.choice(structure.quadrant_centers)
+    # generate_stairwell(city, structure, bottom_floor, top_floor, center_spot=stairwell)
 
 
 def generate_stairwell(
@@ -419,11 +437,10 @@ def generate_stairwell(
     center_spot=None,
     horiz_spot=True,
 ):
+    # ! FIX spot placement not really working
     x, y = center_spot or structure.center
     x_add, y_add = (1, 0) if horiz_spot else (0, 1)
     for floor in range(bottom_floor, top_floor):
-        # generate_flooring(city, floor, structure)
-        # generate_walls(city, floor, structure)
 
         if floor % 2 == 0:
             down_spot = (x - x_add, y - y_add)
@@ -471,8 +488,11 @@ def generate_office(city, level, structure):
     bookshelf_spots = random.choices(structure.along_inside_walls, k=max(1, size // 3))
     x, y = structure.center
     place_tiles(city, level, bookshelf_spots, tile_types.BOOKCASE_TILES, False)
-    place_tiles(city, level, [(x, y)], [tile_types.table], True)
+    # place_tiles(city, level, [(x, y)], [tile_types.table], True)
     place_tiles(city, level, [(x, y - 1)], [tile_types.chair_horiz], True)
+
+    computer_desk = entity_factory.computer.spawn(city, level, x, y)
+    computer_desk.information.add_text("Hello!")
 
 
 def generate_library(city, level, structure):
@@ -636,6 +656,7 @@ def generate_doors(city, level, structure):
     while True:
         (x, y) = random.choice(structure.edges)
         if place_doors_and_reserve_floor(city, level, structure, x, y):
+            structure.add_door(x, y)
             return
 
 
@@ -674,8 +695,18 @@ def generate_kitchen():
 
 
 def generate_bathroom(city, level, structure):
+    spots = structure.inside_wall_same_as_door
+    place_tiles(city, level, spots, [tile_types.sink], False)
+    # spot = random.choice(structure.along_inside_walls)
+    # place_tile(city, level, spot, [tile_types.sink], False)
+
+
+def generate_half_bathroom(city, level, structure):
+    spots = random.choices(structure.inside_wall_opposite_door, k=2)
+    place_tile(city, level, spots[0], [tile_types.sink], True)
+    place_tile(city, level, spots[1], [tile_types.tree], True)
     spot = random.choice(structure.along_inside_walls)
-    place_tile(city, level, spot, [tile_types.sink], False)
+    place_tile(city, level, spot, [tile_types.bookcase_empty], False)
 
 
 def generate_retail():
@@ -705,7 +736,7 @@ def generate_player(city, player):
 
 def generate_npcs(city, structures, roads):
     # level = 1
-    npcs_to_generate = 50
+    npcs_to_generate = 5
     while npcs_to_generate:
         random_room = random.choice(structures)
         random_level = 1

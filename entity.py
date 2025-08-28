@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from components.consumable import Consumable
     from components.equippable import Equippable
     from components.dialog import Dialog
+    from components.information import Information
 
 
 T = TypeVar("T", bound="Entity")
@@ -82,9 +83,8 @@ class Entity:
         self.y = y
         self.level = level
         if gamemap:
-            if hasattr(self, "parent"):  # Possibly uninitialized.
-                if self.parent is self.gamemap:
-                    self.gamemap.entities.remove(self)
+            if hasattr(self, "parent") and self.parent is self.gamemap:
+                self.gamemap.entities.remove(self)
             self.parent = gamemap
             gamemap.entities.add(self)
 
@@ -179,3 +179,33 @@ class Item(Entity):
         self.equippable = equippable
         if self.equippable:
             self.equippable.parent = self
+
+
+class Fixture(Entity):
+    def __init__(
+        self,
+        *,
+        x: int = 0,
+        y: int = 0,
+        level: int = 1,
+        char: str = "?",
+        color: Tuple[int, int, int] = (255, 255, 255),
+        name: str = "<Unnamed>",
+        information: Optional[Information] = None,
+        description: str = "",
+    ):
+        super().__init__(
+            x=x,
+            y=y,
+            level=level,
+            char=char,
+            color=color,
+            name=name,
+            blocks_movement=True,
+            render_order=RenderOrder.FIXTURE,
+        )
+        self.description = description
+
+        self.information = information
+        if self.information:
+            self.information.parent = self

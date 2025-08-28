@@ -1,6 +1,3 @@
-import numpy as np
-
-
 class Camera:
     def __init__(
         self, screen_width: int, screen_height: int, map_width: int, map_height: int

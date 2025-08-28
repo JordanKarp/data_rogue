@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import json
-from typing import Optional, TYPE_CHECKING
+from typing import Optional
 
-from components.base_component import BaseComponent
+# from components.base_component import BaseComponent
 
-if TYPE_CHECKING:
-    from entity import Actor
+# if TYPE_CHECKING:
+#     pass
+# from entity import Actor
 
 
 class Dialog:

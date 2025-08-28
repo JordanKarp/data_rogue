@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-from typing import Dict, List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from components.base_component import BaseComponent
 

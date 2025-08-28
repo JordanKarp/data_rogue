@@ -18,6 +18,7 @@ from engine import Engine
 import entity_factory
 from game_world import GameWorld
 import input_handlers
+import keys
 
 
 def new_game() -> Engine:
@@ -78,18 +79,53 @@ class MainMenu(input_handlers.BaseEventHandler):
 
         console.print(
             console.width // 2,
-            console.height // 2 - 4,
-            "DATA_ROGUE",
+            console.height // 2 - 6,
+            "╓─┐ ╓─┐ ─╥─ ╓─┐     ╔═╗",
             fg=color.menu_title,
             alignment=libtcodpy.CENTER,
         )
         console.print(
             console.width // 2,
-            console.height - 2,
-            "By Jordan Karp",
+            console.height // 2 - 5,
+            "║ │ ║ │  ║  ║ │     ║ ║",
             fg=color.menu_title,
             alignment=libtcodpy.CENTER,
         )
+        console.print(
+            console.width // 2,
+            console.height // 2 - 4,
+            "║ │ ╟─┤  ║  ╟─┤     ╟─╫",
+            fg=color.menu_title,
+            alignment=libtcodpy.CENTER,
+        )
+        console.print(
+            console.width // 2,
+            console.height // 2 - 3,
+            "║ │ ║ │  ║  ║ │     ║ ║",
+            fg=color.menu_title,
+            alignment=libtcodpy.CENTER,
+        )
+        console.print(
+            console.width // 2,
+            console.height // 2 - 2,
+            "╨─┘ ╨ ┘  ╨  ╨ ┘ ─── ╨ ╨",
+            fg=color.menu_title,
+            alignment=libtcodpy.CENTER,
+        )
+        # console.print(
+        #     console.width // 2,
+        #     console.height // 2 - 4,
+        #     "DATA_ROGUE",
+        #     fg=color.menu_title,
+        #     alignment=libtcodpy.CENTER,
+        # )
+        # console.print(
+        #     console.width // 2,
+        #     console.height - 2,
+        #     "By Jordan Karp",
+        #     fg=color.menu_title,
+        #     alignment=libtcodpy.CENTER,
+        # )
 
         menu_width = 24
         for i, text in enumerate(
@@ -97,7 +133,7 @@ class MainMenu(input_handlers.BaseEventHandler):
         ):
             console.print(
                 console.width // 2,
-                console.height // 2 - 2 + i,
+                console.height // 2 + 8 + i,
                 text.ljust(menu_width),
                 fg=color.menu_text,
                 bg=color.black,
@@ -108,9 +144,9 @@ class MainMenu(input_handlers.BaseEventHandler):
     def ev_keydown(
         self, event: tcod.event.KeyDown
     ) -> Optional[input_handlers.BaseEventHandler]:
-        if event.sym in (tcod.event.KeySym.q, tcod.event.KeySym.ESCAPE):
+        if event.sym in (keys.MENU_MAPPING["QUIT"], tcod.event.KeySym.ESCAPE):
             raise SystemExit()
-        elif event.sym == tcod.event.KeySym.c:
+        elif event.sym == keys.MENU_MAPPING["CONTINUE"]:
             try:
                 return input_handlers.MainGameEventHandler(
                     load_game("save_data/savegame.sav")
@@ -120,7 +156,7 @@ class MainMenu(input_handlers.BaseEventHandler):
             except Exception as exc:
                 traceback.print_exc()  # Print to stderr.
                 return input_handlers.PopupMessage(self, f"Failed to load save:\n{exc}")
-        elif event.sym == tcod.event.KeySym.n:
+        elif event.sym == keys.MENU_MAPPING["NEW"]:
             return input_handlers.MainGameEventHandler(new_game())
 
         return None

@@ -6,15 +6,15 @@ import pickle
 from typing import TYPE_CHECKING
 from tcod.console import Console
 from tcod.map import compute_fov
-from libtcodpy import FOV_SYMMETRIC_SHADOWCAST, FOV_BASIC
+from libtcodpy import FOV_BASIC
 
 # from actions import EscapeAction, MovementAction
-import color
+# import color
 from camera import Camera
 from input_handlers import MainGameEventHandler
 from game_clock import GameClock
 from message_log import MessageLog
-from render_functions import render_bar, render_names_at_mouse_location, render_hline
+from render_functions import render_names_at_mouse_location, render_hline
 import exceptions
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 X_POS = 25
 Y_POS = 3
 
-DISPLAYS = ["Character", "Inventory", "Dialog", "Notes", "History"]
+DISPLAYS = ["Character", "Inventory", "Dialog", "Read", "History"]
 DIALOG_INDEX = 2
 
 
@@ -83,11 +83,13 @@ class Engine:
         self.update_camera()
         self.game_map.render(console)
 
-        # self.message_log.render(console=console, x=X_POS + 1, y=20, width=24, height=1)
-        render_names_at_mouse_location(console, X_POS + 1, y=1, engine=self)
-
-        render_hline(console, X_POS, Y_POS, 30)
-        console.print(x=X_POS + 1, y=Y_POS, string=DISPLAYS[self.active_hud_index])
+        # self.message_log.render(console=console, x=self.X_POS + 1, y=20, width=24, height=1)
+        render_names_at_mouse_location(console, self.X_POS + 1, y=1, engine=self)
+        self.render_time(console, self.X_POS + 12, 1)
+        render_hline(console, self.X_POS, self.Y_POS, 30)
+        console.print(
+            x=self.X_POS + 1, y=self.Y_POS, string=DISPLAYS[self.active_hud_index]
+        )
 
         if DISPLAYS[self.active_hud_index] == "Character":
             self.render_character_details(console)
@@ -97,43 +99,51 @@ class Engine:
             self.render_dialog(console)
         elif DISPLAYS[self.active_hud_index] == "Notes":
             self.render_notes(console)
+        elif DISPLAYS[self.active_hud_index] == "Read":
+            self.render_information(console)
         elif DISPLAYS[self.active_hud_index] == "History":
             self.message_log.render(
-                console=console, x=X_POS, y=Y_POS + 1, width=25, height=20
+                console=console, x=self.X_POS, y=self.Y_POS + 1, width=25, height=20
             )
         else:
             print("render error")
 
+    def render_time(self, console, x, y):
+        console.print(x=x, y=y, string=self.clock.display)
+
+    def render_information(self, console):
+        pass
+
     def render_character_details(self, console):
         console.print(
-            x=X_POS,
-            y=Y_POS + 1,
+            x=self.X_POS,
+            y=self.Y_POS + 1,
             string=f"X:{self.player.x} Y:{self.player.y}",
         )
         console.print(
-            x=X_POS,
-            y=Y_POS + 2,
+            x=self.X_POS,
+            y=self.Y_POS + 2,
             string=f"Level: {self.player.experience.current_level}",
         )
         console.print(
-            x=X_POS,
-            y=Y_POS + 3,
+            x=self.X_POS,
+            y=self.Y_POS + 3,
             string=f"XP: {self.player.experience.current_xp}",
         )
         console.print(
-            x=X_POS,
-            y=Y_POS + 4,
+            x=self.X_POS,
+            y=self.Y_POS + 4,
             string=f"XP for next Level: {self.player.experience.experience_to_next_level}",
         )
 
         console.print(
-            x=X_POS,
-            y=Y_POS + 5,
+            x=self.X_POS,
+            y=self.Y_POS + 5,
             string=f"Attack: {self.player.fighter.power}",
         )
         console.print(
-            x=X_POS,
-            y=Y_POS + 6,
+            x=self.X_POS,
+            y=self.Y_POS + 6,
             string=f"Defense: {self.player.fighter.defense}",
         )
 
@@ -148,13 +158,13 @@ class Engine:
                 item_string = f"{item_name.ljust(20)} x{count:02}"
                 if self.player.equipment.item_is_equipped(item):
                     item_string = f"(E) {item_name.ljust(16)} x{count:02}"
-                console.print(X_POS + 1, Y_POS + i + 1, item_string)
+                console.print(self.X_POS + 1, self.Y_POS + i + 1, item_string)
         else:
-            console.print(X_POS + 1, Y_POS + 2, " (Empty) ")
+            console.print(self.X_POS + 1, self.Y_POS + 2, " (Empty) ")
 
         console.print(
-            X_POS + 20,
-            Y_POS,
+            self.X_POS + 20,
+            self.Y_POS,
             f"{(self.player.inventory.capacity - self.player.inventory.remaining):02}/{self.player.inventory.capacity}",
         )
 

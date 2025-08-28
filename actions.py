@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-import dialog_data.dialog_data as dialog_data
+# import dialog_data.dialog_data as dialog_data
 import color
 import exceptions
 
-import random
 from typing import Optional, Tuple, TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from input_handlers import DialogHandler
-
     from engine import Engine
     from entity import Actor, Entity, Item
 
@@ -121,7 +118,7 @@ class PickupAction(Action):
                 and actor_location_y == item.y
                 and actor_location_level == item.level
             ):
-                if inventory.remaining >= inventory.capacity:
+                if inventory.remaining <= 0:
                     raise exceptions.Impossible("Your inventory is full.")
 
                 self.engine.game_map.entities.remove(item)
@@ -229,13 +226,11 @@ class MovementAction(ActionWithDirection):
 class MeleeAction(ActionWithDirection):
     def perform(self) -> None:
         target = self.target_actor
-
         if not target:
             # No entity to attack.
             raise exceptions.Impossible("Nothing to attack.")
 
         damage = self.entity.fighter.power - target.fighter.defense
-
         attack_desc = f"{self.entity.name.capitalize()} attacks {target.name}"
 
         if self.entity is self.engine.player:
@@ -254,50 +249,49 @@ class MeleeAction(ActionWithDirection):
             )
 
 
-class SpeakAction(ActionWithDirection):
-    def perform(self) -> None:
-        target = self.target_actor
+# class SpeakAction(ActionWithDirection):
+#     def perform(self) -> None:
+#         target = self.target_actor
 
-        if not target:
-            # No entity to attack.
-            raise exceptions.Impossible("No one to speak to.")
+#         if not target:
+#             # No entity to attack.
+#             raise exceptions.Impossible("No one to speak to.")
 
-        # self.engine.event_handler = DialogHandler(self.engine, target)
-        # print(self.engine.event_handler)
-        return DialogHandler(self.engine, target)
+#         # self.engine.event_handler = DialogHandler(self.engine, target)
+#         # print(self.engine.event_handler)
+#         return DialogHandler(self.engine, target)
 
-        # msg = random.choice(dialog_data.GREETINGS)
-        # msg = f"{target.name}: {msg}"
-        # self.engine.message_log.add_message(
-        #     msg.format(player_name=self.entity.name), color.white
-        # )
+#         # msg = random.choice(dialog_data.GREETINGS)
+#         # msg = f"{target.name}: {msg}"
+#         # self.engine.message_log.add_message(
+#         #     msg.format(player_name=self.entity.name), color.white
+#         # )
 
 
-class ReadAction(ActionWithDirection):
-    def perform(self) -> None:
-        # target = self.target_actor
+# class ReadAction(Action):
+#     def __init__(self, entity: Actor, information: str):
+#         super().__init__(entity)
+#         self.information = information
 
-        # if not target:
-        #     # No entity to attack.
-        #     raise exceptions.Impossible("Nothing to speak to.")
-
-        # msg = random.choice(dialog.GREETINGS)
-        # msg = f"{target.name}: {msg}"
-        self.engine.message_log.add_message("Reading goes here", color.white)
+#     def perform(self) -> None:
+#         # Log reading (optional)
+#         self.engine.message_log.add_message(f"You read the information.")
+#         # Push the UI handler for info reading
+#         self.engine.event_handler = InformationHandler(self.engine, self.information)
 
 
 class BumpAction(ActionWithDirection):
     def perform(self) -> None:
         # TODO
         if not self.target_actor:
+            if self.blocking_entity and self.blocking_entity.information:
+                return {"information": self.blocking_entity.information}
             return MovementAction(self.entity, self.dx, self.dy).perform()
         if self.target_actor.name == "NPC":
-            print("testBUMP")
             return
             # return SpeakAction(self.entity, self.dx, self.dy).perform()
         return MeleeAction(self.entity, self.dx, self.dy).perform()
 
 
 class WaitAction(Action):
-    def perform(self) -> None:
-        pass
+    def perform(self) -> None: ...

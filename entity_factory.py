@@ -2,12 +2,13 @@ from components import ai
 from components import consumable, equippable
 
 
-from entity import Actor, Item
+from entity import Actor, Item, Fixture
 from components.equipment import Equipment
 from components.fighter import Fighter
 from components.inventory import Inventory
 from components.experience import Experience
 from components.dialog import Dialog
+from components.information import Information
 
 player = Actor(
     char="σ",
@@ -55,6 +56,31 @@ troll = Actor(
     inventory=Inventory(capacity=0),
     experience=Experience(xp_given=100),
 )
+
+
+# FIXTURES
+
+computer = Fixture(
+    char="Γ",
+    color=(121, 246, 192),
+    name="Computer",
+    description="A DataCorp Laptop",
+    information=Information(
+        "This is a computer.With two text lines. This is a really long sentence to be able to test the length of the read information event handler. This is a bit more to that last sentence, cause I dont think it's enough yet."
+    ),
+)
+
+sign = Fixture(
+    char="Γ",
+    color=(150, 45, 0),
+    name="Sign",
+    description="A wooden Sign",
+    information=Information("This is a sign."),
+)
+
+
+# ITEMS
+
 health_potion = Item(
     char="*",
     color=(127, 0, 255),
