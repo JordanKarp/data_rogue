@@ -4,14 +4,14 @@ import traceback
 from pathlib import Path
 
 
-import color
-import input_handlers
-import exceptions
-import setup_game
+import game.render.color as color
+import game.input.input_handlers as input_handlers
+import game.utils.exceptions as exceptions
+import game.world.setup_game as setup_game
 
 
-FONTS_FOLDER = Path("fonts")
-SAVE_FOLDER = Path("save_data")
+FONTS_FOLDER = Path("game/data/fonts")
+SAVE_FOLDER = Path("game/data/save_data")
 
 
 def save_game(handler: input_handlers.BaseEventHandler, filename: str) -> None:
